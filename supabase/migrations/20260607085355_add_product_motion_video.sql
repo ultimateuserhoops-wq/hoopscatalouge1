@@ -1,0 +1,4 @@
+ALTER TABLE public.products
+  ADD COLUMN IF NOT EXISTS motion_video_url text,
+  ADD COLUMN IF NOT EXISTS motion_video_prompt text,
+  ADD COLUMN IF NOT EXISTS motion_video_task_id text;
