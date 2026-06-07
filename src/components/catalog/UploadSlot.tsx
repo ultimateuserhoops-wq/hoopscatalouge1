@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
-import { callGemini, readFileAsDataURL, resizeImage, BG_REMOVAL_PROMPT, compositeOntoBackground, getCurrentThemeBg, getAIErrorMessage, buildColorVariationPrompt, downloadImageHD } from "@/lib/gemini";
+import { callGemini, callGeminiTwoImages, readFileAsDataURL, resizeImage, BG_REMOVAL_PROMPT, compositeOntoBackground, getCurrentThemeBg, getAIErrorMessage, buildColorVariationPrompt, buildOnBodyMatchPrompt, downloadImageHD } from "@/lib/gemini";
 import { notify } from "@/lib/toast";
 import type { ColorVariant } from "@/lib/catalog-types";
 
@@ -57,11 +57,19 @@ export function UploadSlot({ color, slot, icon, label, accept, allowRecolor, sou
     }
     setBusy("Recoloring...");
     try {
-      const prompt = buildColorVariationPrompt(
-        color.hex_main, color.hex_shade || color.hex_main,
-        color.name, !!color.is_light, color.note
-      );
-      const result = await callGemini(sourcePhoto, prompt);
+      let result: string;
+      if (slot === "body" && color.jersey_photo) {
+        // Use already-generated jersey display as the colour/design reference,
+        // so the on-body jersey matches the display exactly.
+        const prompt = buildOnBodyMatchPrompt(color.name, color.hex_main, !!color.is_light, color.note);
+        result = await callGeminiTwoImages(sourcePhoto, color.jersey_photo, prompt, 1536);
+      } else {
+        const prompt = buildColorVariationPrompt(
+          color.hex_main, color.hex_shade || color.hex_main,
+          color.name, !!color.is_light, color.note
+        );
+        result = await callGemini(sourcePhoto, prompt, slot === "body" ? 1536 : 1024);
+      }
       onUpdate(color.id, { [photoField]: result } as any);
       notify(`${color.name} generated`);
     } catch (e) {
