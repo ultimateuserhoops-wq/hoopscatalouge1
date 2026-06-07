@@ -234,26 +234,27 @@ export function buildColorVariationPrompt(
   const textContrast = isLight ? "dark charcoal (#1a1a1a)" : "white (#FFFFFF)";
   const noteSection = note?.trim() ? `\n\nADDITIONAL DESIGNER NOTES:\n${note.trim()}` : "";
 
-  return `You are a professional sportswear colorist. Produce a ${colorName} colorway of THIS EXACT jersey by recoloring only — do not redesign.
+  return `You are a professional sportswear colorist. Produce a ${colorName} colorway of THIS EXACT garment (could be a jersey, jacket, hoodie, shorts, pants, or any apparel — match whatever is in the source image) by recoloring only — do not redesign.
 
 TARGET COLOR: ${hexMain} (use ${hexShade} for fabric shadows / darker folds)
-NUMBER & NAME TEXT: ${textContrast}
+TEXT / NUMBER COLOR (if any text or numbers exist on the garment): ${textContrast}
 
 RECOLOR RULE — preserve the source design 1:1:
-- Look at the source image and identify every design element on the jersey and shorts: graphics, logos, stripes, panels, patterns, trims, waistband, collar, side tape, prints, textures.
+- Look at the source image and identify EVERY design element on the garment(s) shown: graphics, logos, stripes, panels, patterns, trims, collar, cuffs, hem, waistband, side tape, zippers, pockets, prints, textures, embroidery — whatever is actually present.
 - Keep EVERY one of those elements in EXACTLY the same shape, position, size, layout, and proportion.
-- Recolor the main fabric (jersey body + shorts main panels) to ${hexMain}.
-- For all OTHER design elements (stripes, graphics, logos, trims, patterns), keep their EXISTING relative color relationships from the source: if a stripe was lighter than the body in the source, it stays lighter; if a graphic was white/light in the source, it stays white/light; if a trim was a gradient of accent colors, keep that same gradient (just harmonized with the new base color where needed for contrast).
-- The player number and name keep ${textContrast}.
+- Recolor only the MAIN FABRIC / body panels of the garment to ${hexMain}.
+- For all OTHER design elements (stripes, graphics, logos, trims, patterns, zippers, hardware), keep their EXISTING relative color relationships from the source: if a stripe was lighter than the body in the source, it stays lighter; if a graphic was white/light in the source, it stays white/light; if a trim was a gradient of accent colors, keep that same gradient (just harmonized with the new base color where needed for contrast).
+- Any text / numbers / lettering keep ${textContrast}.
 
 ABSOLUTELY DO NOT:
-- Do NOT invent new stripes, side panels, star patterns, tape, or any graphic that is not in the source.
+- Do NOT invent new stripes, panels, patterns, tape, pockets, zippers, or any graphic / hardware that is not in the source.
 - Do NOT remove, move, resize, or restyle any existing graphic, stripe, or logo.
-- Do NOT change the jersey cut, neckline shape, armhole shape, shorts length, or silhouette.
-- Do NOT change the model (skin, face, hair, body, pose, shoes, socks, basketball) or the background.
+- Do NOT change the garment cut, neckline, collar style, armhole shape, sleeve length, hem length, zipper placement, or overall silhouette.
+- Do NOT change the model (if any: skin, face, hair, body, pose, shoes, props, accessories) or the background / studio / hangers / racks.
 - Do NOT change fabric texture or lighting direction.
+- Do NOT swap the garment type — if the source shows a jacket, keep it a jacket; if it shows a jersey, keep it a jersey.
 
-Think of this as a fabric dye change on the same exact garment — every print, panel and trim from the source must appear in the result in the same place, only the base fabric color changes to ${hexMain}.${noteSection}`;
+Think of this as a fabric dye change on the same exact garment — every print, panel, trim, and piece of hardware from the source must appear in the result in the same place, only the base fabric color changes to ${hexMain}.${noteSection}`;
 }
 
 export function buildOnBodyMatchPrompt(
@@ -262,17 +263,18 @@ export function buildOnBodyMatchPrompt(
   const textContrast = isLight ? "dark charcoal (#1a1a1a)" : "white (#FFFFFF)";
   const noteSection = note?.trim() ? `\n\nADDITIONAL DESIGNER NOTES:\n${note.trim()}` : "";
   return `You are a professional sportswear product photographer. You have TWO images:
-- IMAGE 1: an ON-BODY photo of a model wearing a jersey set. This is your CANVAS — keep the model, pose, body, skin, hair, face, shoes, props, lighting, camera angle, and background EXACTLY as-is.
-- IMAGE 2: the FINAL ${colorName} jersey design (already approved). This is your DESIGN REFERENCE — the on-body jersey must match this EXACTLY in colour, graphics, stripes, panels, logos, number, name, trim, waistband and every print.
+- IMAGE 1: an ON-BODY (or on-hanger / on-rack / flat-lay) photo showing how the garment is worn or displayed. This is your CANVAS — keep the model / mannequin / hangers / rack, pose, body, skin, hair, face, shoes, props, lighting, camera angle, and background EXACTLY as-is.
+- IMAGE 2: the FINAL ${colorName} garment design (already approved — could be a jersey, jacket, hoodie, shorts, pants, etc.). This is your DESIGN REFERENCE — the garment in IMAGE 1 must match this EXACTLY in colour, graphics, stripes, panels, logos, text, trims, collar, cuffs, hem, zippers, and every print.
 
-TASK: Repaint the jersey + shorts worn by the model in IMAGE 1 so they become a 1:1 replica of the jersey + shorts shown in IMAGE 2.
+TASK: Repaint the garment(s) shown in IMAGE 1 so they become a 1:1 replica of the garment(s) shown in IMAGE 2 — same colour, same design elements, same hardware. Match whatever garment type is in IMAGE 2 onto the same garment area in IMAGE 1.
 
 STRICT RULES:
 - Base fabric colour: ${hexMain} (${colorName}) — must match IMAGE 2 exactly.
-- Number / name text colour: ${textContrast} — match IMAGE 2.
-- Copy every graphic, stripe, side panel, logo, trim, waistband detail, collar, sleeve edge, sublimation pattern from IMAGE 2 onto the model's garment in IMAGE 1, in the same positions and proportions (adapted to the model's pose and fabric folds).
-- Do NOT change the model, pose, body, skin tone, hair, face, hands, shoes, basketball, background, lighting, or camera.
+- Any text / number / lettering colour: ${textContrast} — match IMAGE 2.
+- Copy every graphic, stripe, panel, logo, trim, collar, cuff, hem, zipper, sleeve edge, sublimation pattern from IMAGE 2 onto the garment in IMAGE 1, in the same positions and proportions (adapted to the actual drape / pose / fabric folds in IMAGE 1).
+- Do NOT change the model / mannequin, pose, body, skin tone, hair, face, hands, shoes, props, hangers, rack, background, lighting, or camera.
 - Do NOT invent any design element that is not in IMAGE 2.
+- Do NOT swap the garment type or silhouette shown in IMAGE 1 — only repaint / redesign what is already there.
 - Output must be a clean, sharp, high-resolution on-body product photo, photorealistic, with realistic fabric folds and shading consistent with IMAGE 1's lighting.${noteSection}`;
 }
 
@@ -309,70 +311,72 @@ export function buildJerseyDisplayPrompt(
   const textContrast = isLight ? "#1a1a1a" : "#FFFFFF";
   const noteSection = note?.trim() ? `\n\nDESIGNER NOTES FROM THE HOOPS TEAM:\n${note.trim()}` : "";
 
-  return `You are a professional sportswear design artist and product photographer.
+  return `You are a professional apparel design artist and product photographer.
 
 You have been given TWO images:
-- IMAGE 1: A basketball player wearing a jersey set. This is your DESIGN SOURCE.
-- IMAGE 2: A flat-lay jersey template on a hanger/stand/neutral surface. This is your CANVAS.
+- IMAGE 1: A model / mannequin / on-body or on-hanger photo showing the FULL garment design (could be a jersey, jacket, hoodie, shorts, pants, or any apparel). This is your DESIGN SOURCE.
+- IMAGE 2: A flat-lay garment template on a hanger / stand / neutral surface. This is your CANVAS.
 
 ═══════════════════════════════════════════════════
-STEP 1 — EXTRACT these design elements from IMAGE 1:
+STEP 1 — EXTRACT design elements from IMAGE 1:
 ═══════════════════════════════════════════════════
 
-A. PRIMARY FABRIC COLOR: ${hexMain} — the main body color of the jersey
-B. SECONDARY / TRIM COLOR: ${trimColor} — collar, sleeve edges, waistband, side panel borders
-C. SIDE PANEL DESIGN: the vertical stripe or panel running down the sides of the jersey and shorts — extract its exact shape, width, and color
-D. COLLAR DESIGN: exact style (V-neck, crew, band collar), color, and trim detail
-E. SLEEVE EDGES: the trim band color and width around each armhole
-F. TEAM NAME / LETTERING: the exact text, font style, color (${textContrast}), and position on the chest
-G. PLAYER NUMBER: the number, its size, color (${textContrast}), outline color (${trimColor}), and position on the front
-H. WAISTBAND: the shorts waistband color, stripe pattern, and width
-I. LOGOS: positions and colors of any brand logos (Nike swoosh, team badge) on the jersey
-J. ANY DECORATIVE PATTERNS: stars, geometric shapes, sublimation patterns, gradient panels — extract all of them
+Look at IMAGE 1 carefully and identify EVERY design element actually present — do not assume basketball-specific parts exist. Catalogue whatever you see:
+- PRIMARY FABRIC COLOR (target: ${hexMain})
+- SECONDARY / TRIM COLOR (target accent: ${trimColor}) — collar, cuffs, hem, side panels, zipper tape, waistband, edge tape
+- SIDE PANELS / STRIPES — shape, width, color
+- COLLAR / HOOD / NECKLINE — exact style and trim
+- SLEEVE EDGES / CUFFS — color, width, ribbing
+- TEXT / LETTERING / TEAM NAME — exact text, font, color (${textContrast}), position
+- NUMBERS — size, color (${textContrast}), outline (${trimColor}), position
+- HEM / WAISTBAND — color, stripe pattern, width
+- ZIPPERS, POCKETS, BUTTONS, DRAWSTRINGS — color, placement, hardware
+- LOGOS — position and color of every brand mark and badge
+- DECORATIVE PATTERNS — stripes, stars, geometric shapes, sublimation, gradients
+
+If the source has no number, no text, no waistband, etc. — skip that element. Only reproduce what is actually there.
 
 ═══════════════════════════════════════════════════
 STEP 2 — APPLY to IMAGE 2 (the template) with PRECISION:
 ═══════════════════════════════════════════════════
 
-1. PRIMARY FABRIC: Fill all main body panels of the template jersey with ${hexMain}
-   Use ${hexShade} for shadow/fold areas to maintain realistic fabric depth
+1. PRIMARY FABRIC: Fill all main body panels of the template with ${hexMain}.
+   Use ${hexShade} for shadow / fold areas to maintain realistic fabric depth.
 
-2. SIDE PANELS: Apply the side panel design extracted from Image 1 to the corresponding side positions of the template jersey
-   Match the exact proportions and color (${trimColor})
+2. SIDE PANELS / STRIPES: Apply the panels/stripes from IMAGE 1 to the corresponding positions on the template, in color ${trimColor} (or whatever color they had in IMAGE 1), matching proportions.
 
-3. COLLAR: Reproduce the exact collar style from Image 1 on the template collar
-   Color: ${trimColor}
+3. COLLAR / HOOD / NECKLINE: Reproduce the exact collar/hood/neckline style and trim from IMAGE 1 on the template, color ${trimColor} where applicable.
 
-4. SLEEVE EDGES: Apply the armhole trim from Image 1 to the template's sleeve openings
-   Color: ${trimColor}, same width proportionally
+4. SLEEVE EDGES / CUFFS: Apply the cuff/sleeve-edge style from IMAGE 1 to the template's sleeve openings, color ${trimColor}, same width proportionally.
 
-5. TEAM NAME: Place the team name text on the template chest in the same vertical/horizontal position as Image 1
-   Color: ${textContrast}, same font style
+5. TEXT / LETTERING: If present, place text on the template in the same position as IMAGE 1, color ${textContrast}, same font style.
 
-6. NUMBER: Place the player number on the template front center, same size and position as Image 1
-   Fill: ${textContrast}, Outline: ${trimColor}
+6. NUMBERS: If present, place numbers in the same position, fill ${textContrast}, outline ${trimColor}.
 
-7. WAISTBAND: Apply the waistband stripe to the template shorts with matching color and proportion
+7. HEM / WAISTBAND: If present, apply the hem/waistband detail to the template with matching color and proportion.
 
-8. LOGOS: Place all logos in their exact relative positions on the template
+8. ZIPPERS / POCKETS / HARDWARE: If present in IMAGE 1, place them in the same positions on the template with the same colors.
 
-9. DECORATIVE PATTERNS: Apply any geometric patterns, sublimation prints, or decorative elements from Image 1 to their corresponding positions on the template
+9. LOGOS: Place all logos in their exact relative positions on the template.
+
+10. DECORATIVE PATTERNS: Apply any geometric patterns, sublimation prints, or decorative elements from IMAGE 1 to the corresponding positions on the template.
 
 ═══════════════════════════════════════════════════
 CRITICAL OUTPUT RULES:
 ═══════════════════════════════════════════════════
 
-✅ The output MUST match the template's shape, hanger/stand, and background exactly
-✅ Keep the template's background (hanger, surface, color) completely unchanged
-✅ The final jersey must look like a professional flat-lay product photo
-✅ All design proportions must match Image 1's jersey design — scaled to fit the template dimensions
-✅ Fabric texture should look realistic — not flat fill, actual mesh/fabric appearance
-✅ Realistic lighting and shadows based on the template's existing light source direction
+✅ The output MUST match the template's shape, hanger/stand, and background exactly.
+✅ Keep the template's background (hanger, surface, color) completely unchanged.
+✅ The final garment must look like a professional flat-lay product photo.
+✅ All design proportions must match IMAGE 1's design — scaled to fit the template dimensions.
+✅ Fabric texture should look realistic — actual fabric appearance, not flat fill.
+✅ Realistic lighting and shadows based on the template's existing light source direction.
 
-❌ Do NOT show any person or model in the output
-❌ Do NOT change the template's shape, fold positions, or composition
-❌ Do NOT invent new design elements not present in Image 1
-❌ Do NOT simplify or omit any design detail from Image 1
+❌ Do NOT show any person or model in the output.
+❌ Do NOT change the template's garment type, shape, fold positions, or composition.
+❌ Do NOT invent new design elements not present in IMAGE 1.
+❌ Do NOT simplify or omit any design detail from IMAGE 1.
+❌ Do NOT swap the garment type — if the template is a jacket, output a jacket; if it's a jersey, output a jersey.
 
 COLORWAY SUMMARY:
 - Primary: ${hexMain} (${colorName})
