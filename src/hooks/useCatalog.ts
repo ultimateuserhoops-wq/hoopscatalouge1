@@ -84,7 +84,7 @@ export function useCatalog(productSku?: string | null) {
     if (persisted !== updates) {
       setColorVariants((prev) => prev.map((c) => (c.id === id ? { ...c, ...(persisted as Partial<ColorVariant>) } : c)));
     }
-    await supabase.from("color_variants").update(persisted).eq("id", id);
+    await supabase.from("color_variants").update(persisted as Partial<ColorVariant>).eq("id", id);
   }, []);
 
   const updateProduct = useCallback(async (updates: Partial<Product>) => {

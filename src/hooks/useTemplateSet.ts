@@ -35,7 +35,7 @@ export function useTemplateSet(productId: string | null | undefined) {
     if (existing?.id) {
       const { data } = await supabase
         .from("template_sets")
-        .update(persisted)
+        .update(persisted as Partial<TemplateSet>)
         .eq("id", existing.id)
         .select()
         .single();
@@ -43,7 +43,7 @@ export function useTemplateSet(productId: string | null | undefined) {
     } else {
       const { data } = await supabase
         .from("template_sets")
-        .insert({ product_id: productId, name: "Default Template", ...persisted })
+        .insert({ product_id: productId, name: "Default Template", ...(persisted as Partial<TemplateSet>) })
         .select()
         .single();
       if (data) setTemplateSet(data as TemplateSet);
