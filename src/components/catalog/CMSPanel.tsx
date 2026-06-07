@@ -251,7 +251,7 @@ function ColorsTab({ keyInput, setKeyInput, productId, productSku, colorVariants
                 className="w-full flex items-center gap-2 p-2 hover:bg-white/5">
                 <div className="w-8 h-8 rounded overflow-hidden border border-white/10 flex-shrink-0">
                   {c.jersey_photo
-                    ? <img src={c.jersey_photo} className="w-full h-full object-cover" alt="" />
+                    ? <img loading="lazy" decoding="async" src={c.jersey_photo} className="w-full h-full object-cover" alt="" />
                     : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${c.hex_main}, ${c.hex_shade || c.hex_main})` }} />}
                 </div>
                 <div className="flex-1 text-left">
@@ -454,7 +454,7 @@ function TemplateSlot({
       </div>
       {photo ? (
         <div className="flex-1 flex items-center gap-1.5 bg-black/40 border border-white/10 rounded px-1.5 py-1">
-          <img src={photo} alt={label} className="w-8 h-8 object-contain flex-shrink-0" />
+          <img loading="lazy" decoding="async" src={photo} alt={label} className="w-8 h-8 object-contain flex-shrink-0" />
           <div className="flex-1 text-[0.55rem] text-white/60 truncate font-condensed">{photoName || "Template uploaded"}</div>
           <button onClick={onRemove} className="text-red-400 hover:text-red-300 px-1 text-xs">✕</button>
         </div>

@@ -502,7 +502,7 @@ function MobileProductView(pp: ProductProps) {
           <ProductDisplayUpload colorId={liveColor?.id ?? null} slotType={displayMode} isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
             <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
               {photo ? (
-                <img src={photo} alt={liveColor?.name} style={{ maxWidth: "85%", maxHeight: "90%", objectFit: "contain", mixBlendMode: "normal" }} />
+                <img loading="lazy" decoding="async" src={photo} alt={liveColor?.name} style={{ maxWidth: "85%", maxHeight: "90%", objectFit: "contain", mixBlendMode: "normal" }} />
               ) : displayMode === "jersey" && liveColor ? (
                 <div style={{ width: "65%", height: "65%" }}>
                   <JerseySVG hexMain={liveColor.hex_main} hexShade={liveColor.hex_shade || liveColor.hex_main} isLight={!!liveColor.is_light} category={product.category || undefined} />
@@ -742,7 +742,7 @@ function MobileColorCard({ color, isActive, onClick, canGenerate, hasPhoto, onGe
         border: isActive ? "2px solid var(--t-accent)" : "1px solid var(--t-border)",
       }}>
         {color.jersey_photo
-          ? <img src={color.jersey_photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ? <img loading="lazy" decoding="async" src={color.jersey_photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           : <div style={{ width: "100%", height: "100%", background: `linear-gradient(135deg, ${color.hex_main}, ${color.hex_shade || color.hex_main})` }} />
         }
         <div style={{
