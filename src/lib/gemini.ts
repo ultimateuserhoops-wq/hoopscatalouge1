@@ -234,26 +234,27 @@ export function buildColorVariationPrompt(
   const textContrast = isLight ? "dark charcoal (#1a1a1a)" : "white (#FFFFFF)";
   const noteSection = note?.trim() ? `\n\nADDITIONAL DESIGNER NOTES:\n${note.trim()}` : "";
 
-  return `You are a professional sportswear colorist. Produce a ${colorName} colorway of THIS EXACT jersey by recoloring only — do not redesign.
+  return `You are a professional sportswear colorist. Produce a ${colorName} colorway of THIS EXACT garment (could be a jersey, jacket, hoodie, shorts, pants, or any apparel — match whatever is in the source image) by recoloring only — do not redesign.
 
 TARGET COLOR: ${hexMain} (use ${hexShade} for fabric shadows / darker folds)
-NUMBER & NAME TEXT: ${textContrast}
+TEXT / NUMBER COLOR (if any text or numbers exist on the garment): ${textContrast}
 
 RECOLOR RULE — preserve the source design 1:1:
-- Look at the source image and identify every design element on the jersey and shorts: graphics, logos, stripes, panels, patterns, trims, waistband, collar, side tape, prints, textures.
+- Look at the source image and identify EVERY design element on the garment(s) shown: graphics, logos, stripes, panels, patterns, trims, collar, cuffs, hem, waistband, side tape, zippers, pockets, prints, textures, embroidery — whatever is actually present.
 - Keep EVERY one of those elements in EXACTLY the same shape, position, size, layout, and proportion.
-- Recolor the main fabric (jersey body + shorts main panels) to ${hexMain}.
-- For all OTHER design elements (stripes, graphics, logos, trims, patterns), keep their EXISTING relative color relationships from the source: if a stripe was lighter than the body in the source, it stays lighter; if a graphic was white/light in the source, it stays white/light; if a trim was a gradient of accent colors, keep that same gradient (just harmonized with the new base color where needed for contrast).
-- The player number and name keep ${textContrast}.
+- Recolor only the MAIN FABRIC / body panels of the garment to ${hexMain}.
+- For all OTHER design elements (stripes, graphics, logos, trims, patterns, zippers, hardware), keep their EXISTING relative color relationships from the source: if a stripe was lighter than the body in the source, it stays lighter; if a graphic was white/light in the source, it stays white/light; if a trim was a gradient of accent colors, keep that same gradient (just harmonized with the new base color where needed for contrast).
+- Any text / numbers / lettering keep ${textContrast}.
 
 ABSOLUTELY DO NOT:
-- Do NOT invent new stripes, side panels, star patterns, tape, or any graphic that is not in the source.
+- Do NOT invent new stripes, panels, patterns, tape, pockets, zippers, or any graphic / hardware that is not in the source.
 - Do NOT remove, move, resize, or restyle any existing graphic, stripe, or logo.
-- Do NOT change the jersey cut, neckline shape, armhole shape, shorts length, or silhouette.
-- Do NOT change the model (skin, face, hair, body, pose, shoes, socks, basketball) or the background.
+- Do NOT change the garment cut, neckline, collar style, armhole shape, sleeve length, hem length, zipper placement, or overall silhouette.
+- Do NOT change the model (if any: skin, face, hair, body, pose, shoes, props, accessories) or the background / studio / hangers / racks.
 - Do NOT change fabric texture or lighting direction.
+- Do NOT swap the garment type — if the source shows a jacket, keep it a jacket; if it shows a jersey, keep it a jersey.
 
-Think of this as a fabric dye change on the same exact garment — every print, panel and trim from the source must appear in the result in the same place, only the base fabric color changes to ${hexMain}.${noteSection}`;
+Think of this as a fabric dye change on the same exact garment — every print, panel, trim, and piece of hardware from the source must appear in the result in the same place, only the base fabric color changes to ${hexMain}.${noteSection}`;
 }
 
 export function buildOnBodyMatchPrompt(
@@ -262,17 +263,18 @@ export function buildOnBodyMatchPrompt(
   const textContrast = isLight ? "dark charcoal (#1a1a1a)" : "white (#FFFFFF)";
   const noteSection = note?.trim() ? `\n\nADDITIONAL DESIGNER NOTES:\n${note.trim()}` : "";
   return `You are a professional sportswear product photographer. You have TWO images:
-- IMAGE 1: an ON-BODY photo of a model wearing a jersey set. This is your CANVAS — keep the model, pose, body, skin, hair, face, shoes, props, lighting, camera angle, and background EXACTLY as-is.
-- IMAGE 2: the FINAL ${colorName} jersey design (already approved). This is your DESIGN REFERENCE — the on-body jersey must match this EXACTLY in colour, graphics, stripes, panels, logos, number, name, trim, waistband and every print.
+- IMAGE 1: an ON-BODY (or on-hanger / on-rack / flat-lay) photo showing how the garment is worn or displayed. This is your CANVAS — keep the model / mannequin / hangers / rack, pose, body, skin, hair, face, shoes, props, lighting, camera angle, and background EXACTLY as-is.
+- IMAGE 2: the FINAL ${colorName} garment design (already approved — could be a jersey, jacket, hoodie, shorts, pants, etc.). This is your DESIGN REFERENCE — the garment in IMAGE 1 must match this EXACTLY in colour, graphics, stripes, panels, logos, text, trims, collar, cuffs, hem, zippers, and every print.
 
-TASK: Repaint the jersey + shorts worn by the model in IMAGE 1 so they become a 1:1 replica of the jersey + shorts shown in IMAGE 2.
+TASK: Repaint the garment(s) shown in IMAGE 1 so they become a 1:1 replica of the garment(s) shown in IMAGE 2 — same colour, same design elements, same hardware. Match whatever garment type is in IMAGE 2 onto the same garment area in IMAGE 1.
 
 STRICT RULES:
 - Base fabric colour: ${hexMain} (${colorName}) — must match IMAGE 2 exactly.
-- Number / name text colour: ${textContrast} — match IMAGE 2.
-- Copy every graphic, stripe, side panel, logo, trim, waistband detail, collar, sleeve edge, sublimation pattern from IMAGE 2 onto the model's garment in IMAGE 1, in the same positions and proportions (adapted to the model's pose and fabric folds).
-- Do NOT change the model, pose, body, skin tone, hair, face, hands, shoes, basketball, background, lighting, or camera.
+- Any text / number / lettering colour: ${textContrast} — match IMAGE 2.
+- Copy every graphic, stripe, panel, logo, trim, collar, cuff, hem, zipper, sleeve edge, sublimation pattern from IMAGE 2 onto the garment in IMAGE 1, in the same positions and proportions (adapted to the actual drape / pose / fabric folds in IMAGE 1).
+- Do NOT change the model / mannequin, pose, body, skin tone, hair, face, hands, shoes, props, hangers, rack, background, lighting, or camera.
 - Do NOT invent any design element that is not in IMAGE 2.
+- Do NOT swap the garment type or silhouette shown in IMAGE 1 — only repaint / redesign what is already there.
 - Output must be a clean, sharp, high-resolution on-body product photo, photorealistic, with realistic fabric folds and shading consistent with IMAGE 1's lighting.${noteSection}`;
 }
 
