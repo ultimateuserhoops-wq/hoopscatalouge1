@@ -75,14 +75,28 @@ Write the prompt now as one flowing paragraph.`;
       throw new Error(`KIE chat error ${res.status}: ${t.slice(0, 200)}`);
     }
     const json = await res.json();
-    const raw = json?.choices?.[0]?.message?.content;
+    // KIE may wrap response as { code, msg, data: {...} } or return OpenAI shape directly
+    const payload = json?.data ?? json;
+    const choice =
+      payload?.choices?.[0]?.message?.content ??
+      payload?.choices?.[0]?.delta?.content ??
+      payload?.message?.content ??
+      payload?.content ??
+      payload?.output_text ??
+      payload?.text;
+    const raw = choice;
     const prompt = (typeof raw === "string"
       ? raw
       : Array.isArray(raw)
         ? raw.map((p: any) => p?.text || "").join("")
         : ""
     ).trim();
-    if (!prompt) throw new Error("Empty prompt from Claude");
+    if (!prompt) {
+      console.error("KIE chat empty response:", JSON.stringify(json).slice(0, 800));
+      throw new Error(
+        `Empty prompt from Claude. Response: ${JSON.stringify(json).slice(0, 300)}`
+      );
+    }
     return { prompt };
   });
 
