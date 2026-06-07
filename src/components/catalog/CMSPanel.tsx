@@ -120,13 +120,13 @@ function ThemeTab({ themes, selectTheme, updateCustomTheme }: { themes: CatalogT
       </div>
       <div>
         <div className="text-[0.55rem] font-condensed tracking-widest text-white/60 uppercase mb-2">Custom builder</div>
-        {(["accent","bg","surface","text_color"] as const).map((key) => {
+        {(["accent","bg","surface","text_color","display_bg"] as const).map((key) => {
           const val = active?.[key] || "#000000";
           return (
             <div key={key} className="flex items-center gap-2 mb-2">
               <input type="color" value={val} onChange={(e) => updateCustomTheme({ [key]: e.target.value } as any)}
                 className="w-9 h-9 rounded border border-white/10 bg-transparent" />
-              <div className="text-[0.6rem] font-condensed tracking-widest text-white/60 uppercase w-20">{key.replace("_color","")}</div>
+              <div className="text-[0.6rem] font-condensed tracking-widest text-white/60 uppercase w-20">{key === "display_bg" ? "Display BG" : key.replace("_color","")}</div>
               <input value={val} onChange={(e) => updateCustomTheme({ [key]: e.target.value } as any)}
                 className="flex-1 bg-white/5 border border-white/10 rounded px-2 py-1 text-xs font-mono" />
             </div>

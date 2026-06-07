@@ -93,6 +93,7 @@ export type Database = {
           accent: string
           accent2: string
           bg: string
+          display_bg: string
           id: string
           is_active: boolean | null
           name: string
@@ -105,6 +106,7 @@ export type Database = {
           accent: string
           accent2: string
           bg: string
+          display_bg?: string
           id?: string
           is_active?: boolean | null
           name: string
@@ -117,6 +119,7 @@ export type Database = {
           accent?: string
           accent2?: string
           bg?: string
+          display_bg?: string
           id?: string
           is_active?: boolean | null
           name?: string

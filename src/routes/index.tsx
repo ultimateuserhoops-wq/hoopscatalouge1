@@ -122,6 +122,7 @@ function CatalogPage() {
             updateProduct={cat.updateProduct}
             isAdmin={isAuthed}
             activeThemeId={cat.themes?.find((t) => t.is_active)?.theme_id}
+            activeTheme={cat.themes?.find((t) => t.is_active) || null}
           />
         );
     }

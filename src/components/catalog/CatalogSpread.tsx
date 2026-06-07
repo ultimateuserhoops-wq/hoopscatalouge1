@@ -20,6 +20,7 @@ interface Props {
   updateColorVariant: (id: string, patch: Partial<ColorVariant>) => void;
   isAdmin?: boolean;
   activeThemeId?: string;
+  activeTheme?: { display_bg?: string; theme_id?: string } | null;
   updateProduct?: (patch: Partial<Product>) => void;
 }
 
@@ -106,7 +107,7 @@ export function CatalogSpread(p: Props) {
     if (!activeColor || !currentPhoto) return;
     setAiBusy("Matching background…");
     try {
-      const bg = getLeftPageBg(p.activeThemeId);
+      const bg = p.activeTheme?.display_bg || getLeftPageBg(p.activeThemeId);
       const result = await callGemini(currentPhoto, buildMatchBgPrompt(bg));
       p.updateColorVariant(activeColor.id, { [fieldMap[displayMode]]: result } as any);
       notify("Background matched");
@@ -217,11 +218,16 @@ export function CatalogSpread(p: Props) {
   }
 
   const haloColor = activeColor ? hexToRgba(activeColor.hex_main, 0.28) : "transparent";
-  const leftPageBg = p.activeThemeId === "white" ? "#f0ebe0" : "#0a0a0a";
-  const isWhiteTheme = p.activeThemeId === "white";
-  const labelMutedColor = isWhiteTheme ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.3)";
-  const labelTextColor = isWhiteTheme ? "#0a0a0a" : "var(--t-text)";
-  const topBarBorder = isWhiteTheme ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(255,255,255,0.06)";
+  const leftPageBg = p.activeTheme?.display_bg || (p.activeThemeId === "white" ? "#f0ebe0" : "#ffffff");
+  const isLightBg = (() => {
+    const h = (leftPageBg || "#ffffff").replace("#", "");
+    if (h.length < 6) return true;
+    const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+    return (r * 0.299 + g * 0.587 + b * 0.114) > 170;
+  })();
+  const labelMutedColor = isLightBg ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.3)";
+  const labelTextColor = isLightBg ? "#0a0a0a" : "var(--t-text)";
+  const topBarBorder = isLightBg ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(255,255,255,0.06)";
 
 
   return (
