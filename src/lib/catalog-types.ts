@@ -14,6 +14,9 @@ export interface Product {
   page_right: string | null;
   collection_label: string | null;
   cta_label: string | null;
+  motion_video_url?: string | null;
+  motion_video_prompt?: string | null;
+  motion_video_task_id?: string | null;
 }
 
 export interface ColorVariant {
