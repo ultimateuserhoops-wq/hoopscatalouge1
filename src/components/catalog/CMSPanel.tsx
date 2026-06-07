@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { X, Plus, Trash2, Sparkles, LogOut, Check, Upload, Wand2, Download } from "lucide-react";
+import { X, Plus, Trash2, Sparkles, LogOut, Check, Upload, Wand2, Download, FileText } from "lucide-react";
 import type { CatalogTheme, ColorVariant, Product, SpecRow, TemplateSet } from "@/lib/catalog-types";
+import type { SpreadDef } from "@/lib/catalog-spreads";
 import { UploadSlot } from "./UploadSlot";
 import { buildColorVariationPrompt, buildJerseyDisplayPrompt, callGemini, callGeminiTwoImages, downloadImageHD, getAIErrorMessage, loadGeminiKeyFromDb, readFileAsDataURL, resizeImage, saveGeminiKeyToDb } from "@/lib/gemini";
 
@@ -9,12 +10,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTemplateSet } from "@/hooks/useTemplateSet";
 import { useNavigate } from "@tanstack/react-router";
 
-type Tab = "theme" | "info" | "colors" | "specs" | "page";
+type Tab = "theme" | "pages" | "info" | "colors" | "specs" | "page";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  product: Product;
+  product: Product | null;
   colorVariants: ColorVariant[];
   specRows: SpecRow[];
   themes: CatalogTheme[];
@@ -27,6 +28,10 @@ interface Props {
   deleteSpec: (id: string) => void;
   selectTheme: (theme_id: string) => void;
   updateCustomTheme: (patch: Partial<CatalogTheme>) => void;
+  spreads: SpreadDef[];
+  addProductPage: (opts: { name: string; category: string; sku?: string }) => Promise<{ sku: string; spreadId: string }>;
+  deleteSpread: (spread_id: string) => Promise<void>;
+  onSpreadChange?: (index: number) => void;
 }
 
 export function CMSPanel(p: Props) {
@@ -58,7 +63,7 @@ export function CMSPanel(p: Props) {
       </div>
 
       <div className="flex border-b border-white/10 text-[0.6rem] font-condensed tracking-widest">
-        {(["theme","info","colors","specs","page"] as Tab[]).map((t) => (
+        {(["theme","pages","info","colors","specs","page"] as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`flex-1 py-2.5 uppercase ${tab===t?"bg-white/10 text-white":"text-white/50 hover:text-white"}`}>
             {t}
@@ -68,8 +73,18 @@ export function CMSPanel(p: Props) {
 
       <div className="cms-scroll overflow-y-auto h-[calc(100vh-92px)] p-4 space-y-4">
         {tab === "theme" && <ThemeTab themes={p.themes} selectTheme={p.selectTheme} updateCustomTheme={p.updateCustomTheme} />}
-        {tab === "info" && <InfoTab product={p.product} updateProduct={p.updateProduct} />}
-        {tab === "colors" && (
+        {tab === "pages" && (
+          <PagesTab
+            spreads={p.spreads}
+            addProductPage={p.addProductPage}
+            deleteSpread={p.deleteSpread}
+            onSpreadChange={p.onSpreadChange}
+          />
+        )}
+        {tab === "info" && (p.product
+          ? <InfoTab product={p.product} updateProduct={p.updateProduct} />
+          : <EmptyProductHint />)}
+        {tab === "colors" && p.product && (
           <ColorsTab
             keyInput={keyInput} setKeyInput={setKeyInput}
             productId={p.product.id}
@@ -79,9 +94,130 @@ export function CMSPanel(p: Props) {
             addColor={p.addColor} deleteColor={p.deleteColor}
           />
         )}
+        {tab === "colors" && !p.product && <EmptyProductHint />}
 
         {tab === "specs" && <SpecsTab specRows={p.specRows} addSpec={p.addSpec} updateSpec={p.updateSpec} deleteSpec={p.deleteSpec} />}
-        {tab === "page" && <PageTab product={p.product} updateProduct={p.updateProduct} />}
+        {tab === "page" && (p.product
+          ? <PageTab product={p.product} updateProduct={p.updateProduct} />
+          : <EmptyProductHint />)}
+      </div>
+    </div>
+  );
+}
+
+function EmptyProductHint() {
+  return (
+    <div className="text-[0.65rem] text-white/40 font-condensed tracking-widest uppercase">
+      Open a product page to edit its details.
+    </div>
+  );
+}
+
+function PagesTab({ spreads, addProductPage, deleteSpread, onSpreadChange }: {
+  spreads: SpreadDef[];
+  addProductPage: (opts: { name: string; category: string; sku?: string }) => Promise<{ sku: string; spreadId: string }>;
+  deleteSpread: (spread_id: string) => Promise<void>;
+  onSpreadChange?: (index: number) => void;
+}) {
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("");
+  const [sku, setSku] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const productSpreads = spreads.filter((s) => s.type === "product");
+  const categories = Array.from(new Set(productSpreads.map((s) => s.category).filter(Boolean))) as string[];
+
+  async function handleAdd() {
+    if (!name.trim() || !category.trim()) {
+      notify("Name and category are required", true);
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await addProductPage({ name: name.trim(), category: category.trim().toUpperCase(), sku: sku.trim() || undefined });
+      notify(`✓ Added page for ${res.sku}`);
+      setName(""); setSku("");
+      // Jump to the newly created spread
+      setTimeout(() => {
+        const idx = spreads.findIndex((s) => s.id === res.spreadId);
+        if (idx >= 0 && onSpreadChange) onSpreadChange(idx);
+      }, 250);
+    } catch (e: any) {
+      notify(e?.message || "Failed to add page", true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDelete(spread_id: string, label: string) {
+    if (!confirm(`Remove "${label}"? This will also delete its product and colors.`)) return;
+    try {
+      await deleteSpread(spread_id);
+      notify(`✓ Removed ${label}`);
+    } catch (e: any) {
+      notify(e?.message || "Failed to remove page", true);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <div className="text-[0.55rem] font-condensed tracking-widest text-white/60 uppercase mb-2 flex items-center gap-1">
+          <FileText size={11} /> Create product page
+        </div>
+        <div className="space-y-2 p-2 border border-white/10 rounded bg-white/5">
+          <Field label="Product name" value={name} onChange={setName} />
+          <div>
+            <div className="text-[0.55rem] font-condensed tracking-widest text-white/60 uppercase mb-1">Category</div>
+            <input
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              list="cms-category-list"
+              placeholder="e.g. JERSEYS"
+              className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-white/30 uppercase"
+            />
+            <datalist id="cms-category-list">
+              {categories.map((c) => <option key={c} value={c} />)}
+            </datalist>
+          </div>
+          <Field label="SKU (optional)" value={sku} onChange={setSku} />
+          <div className="text-[0.55rem] text-white/40 italic">Default color is BLACK (#000000).</div>
+          <button
+            onClick={handleAdd}
+            disabled={busy}
+            className="w-full py-2 rounded bg-[var(--t-accent)] text-white text-[0.6rem] font-condensed tracking-widest flex items-center justify-center gap-1 disabled:opacity-50">
+            <Plus size={12} /> {busy ? "ADDING…" : "ADD PRODUCT PAGE"}
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div className="text-[0.55rem] font-condensed tracking-widest text-white/60 uppercase mb-2">
+          Product pages ({productSpreads.length})
+        </div>
+        <div className="space-y-1.5">
+          {productSpreads.map((s) => {
+            const idx = spreads.findIndex((x) => x.id === s.id);
+            return (
+              <div key={s.id} className="flex items-center gap-2 p-2 border border-white/10 rounded bg-white/5">
+                <button
+                  onClick={() => onSpreadChange?.(idx)}
+                  className="flex-1 text-left text-xs font-condensed tracking-wide hover:text-[var(--t-accent)]">
+                  <div>{s.label}</div>
+                  <div className="text-[0.55rem] text-white/40">
+                    {s.category} · p.{String(s.pageLeft).padStart(2,"0")}–{String(s.pageRight).padStart(2,"0")}
+                  </div>
+                </button>
+                <button
+                  onClick={() => handleDelete(s.id, s.label)}
+                  className="p-1.5 text-red-400 hover:text-red-300 hover:bg-white/5 rounded"
+                  aria-label="Delete page">
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
