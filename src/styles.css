@@ -1,0 +1,153 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-display: "Bebas Neue", sans-serif;
+  --font-condensed: "Barlow Condensed", sans-serif;
+  --font-sans: "Barlow", sans-serif;
+}
+
+:root {
+  --background: #050505;
+  --foreground: #f2ede3;
+  --card: #181818;
+  --card-foreground: #f2ede3;
+  --popover: #181818;
+  --popover-foreground: #f2ede3;
+  --primary: #FF4D00;
+  --primary-foreground: #ffffff;
+  --secondary: #181818;
+  --secondary-foreground: #f2ede3;
+  --muted: #1a1a1a;
+  --muted-foreground: #7a7268;
+  --accent: #FF4D00;
+  --accent-foreground: #ffffff;
+  --destructive: #e63946;
+  --destructive-foreground: #ffffff;
+  --border: rgba(255,255,255,0.08);
+  --input: rgba(255,255,255,0.08);
+  --ring: #FF4D00;
+  --radius: 0.5rem;
+
+  /* HOOPS catalog theme variables — overwritten by applyTheme() at runtime */
+  --t-accent: #FF4D00;
+  --t-accent2: #FFB800;
+  --t-bg: #0a0a0a;
+  --t-surface: #181818;
+  --t-text: #f2ede3;
+  --t-subtext: #7a7268;
+  --t-border: rgba(242,237,227,0.07);
+  --t-glow: rgba(255,77,0,0.22);
+  --t-spine: #FF4D00;
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html, body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Catalog theme transitions */
+.catalog-themed,
+.catalog-themed * {
+  transition: color 0.5s, background-color 0.5s, border-color 0.5s, box-shadow 0.5s ease;
+}
+
+/* Court arcs */
+.court-arc {
+  position: absolute;
+  border: 1px solid var(--t-glow);
+  border-bottom: none;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  pointer-events: none;
+}
+
+/* Grid background */
+.grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.012) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.012) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+/* Product container — keep transparent so uploaded photos render at their original colors.
+   Do NOT apply mix-blend-mode: multiply here; it darkens real photos on dark themes. */
+.product-view {
+  background: transparent !important;
+}
+
+:root { --catalog-scale: 1; }
+.catalog-viewport {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--t-bg);
+  overflow: hidden;
+  position: relative;
+  padding: 2vh 3vw;
+  box-sizing: border-box;
+}
+.catalog-scale-wrapper {
+  transform: scale(var(--catalog-scale));
+  transform-origin: center center;
+  flex-shrink: 0;
+}
+
+/* AI spinner */
+.ai-spin {
+  width: 22px; height: 22px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: var(--t-accent);
+  border-radius: 50%;
+  animation: ai-spin 0.8s linear infinite;
+}
+@keyframes ai-spin { to { transform: rotate(360deg); } }
+
+/* Hide scrollbar nicely */
+.cms-scroll::-webkit-scrollbar { width: 6px; }
+.cms-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+
+/* Clip-path arrows */
+.clip-arrow-right {
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%);
+}
+.clip-arrow-left {
+  clip-path: polygon(14px 0, 100% 0, 100% 100%, 14px 100%, 0 50%);
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.mobile-color-grid::-webkit-scrollbar { display: none; }
+
