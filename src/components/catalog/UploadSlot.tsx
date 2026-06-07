@@ -49,9 +49,11 @@ export function UploadSlot({ color, slot, icon, label, accept, allowRecolor, sou
 
 
   const sourcePhoto = (sourceColor?.[photoField] as string | null) ?? null;
+  const canGenerateBodyFromJersey = slot === "body" && !!color.jersey_photo;
+  const canRecolor = !!allowRecolor && (!!sourcePhoto || canGenerateBodyFromJersey);
 
   async function recolor() {
-    if (!sourcePhoto) {
+    if (!sourcePhoto && !canGenerateBodyFromJersey) {
       notify("No source photo to recolor from", true);
       return;
     }
@@ -59,16 +61,20 @@ export function UploadSlot({ color, slot, icon, label, accept, allowRecolor, sou
     try {
       let result: string;
       if (slot === "body" && color.jersey_photo) {
-        // Use already-generated jersey display as the colour/design reference,
-        // so the on-body jersey matches the display exactly.
         const prompt = buildOnBodyMatchPrompt(color.name, color.hex_main, !!color.is_light, color.note);
-        result = await callGeminiTwoImages(sourcePhoto, color.jersey_photo, prompt, 1536);
+        if (sourcePhoto) {
+          // Use a real on-body template + jersey reference for best match.
+          result = await callGeminiTwoImages(sourcePhoto, color.jersey_photo, prompt, 1536);
+        } else {
+          // No on-body template yet — generate from the jersey design alone.
+          result = await callGemini(color.jersey_photo, prompt, 1536);
+        }
       } else {
         const prompt = buildColorVariationPrompt(
           color.hex_main, color.hex_shade || color.hex_main,
           color.name, !!color.is_light, color.note
         );
-        result = await callGemini(sourcePhoto, prompt, slot === "body" ? 1536 : 1024);
+        result = await callGemini(sourcePhoto!, prompt, slot === "body" ? 1536 : 1024);
       }
       onUpdate(color.id, { [photoField]: result } as any);
       notify(`${color.name} generated`);
@@ -87,7 +93,7 @@ export function UploadSlot({ color, slot, icon, label, accept, allowRecolor, sou
             <input type="file" accept={accept} className="hidden"
               onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
           </label>
-          {allowRecolor && sourcePhoto && (
+          {canRecolor && (
             <button onClick={recolor} disabled={!!busy}
               className="text-[0.55rem] px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white">
               🎨 Generate
