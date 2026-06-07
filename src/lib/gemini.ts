@@ -256,6 +256,26 @@ ABSOLUTELY DO NOT:
 Think of this as a fabric dye change on the same exact garment — every print, panel and trim from the source must appear in the result in the same place, only the base fabric color changes to ${hexMain}.${noteSection}`;
 }
 
+export function buildOnBodyMatchPrompt(
+  colorName: string, hexMain: string, isLight: boolean, note?: string | null
+) {
+  const textContrast = isLight ? "dark charcoal (#1a1a1a)" : "white (#FFFFFF)";
+  const noteSection = note?.trim() ? `\n\nADDITIONAL DESIGNER NOTES:\n${note.trim()}` : "";
+  return `You are a professional sportswear product photographer. You have TWO images:
+- IMAGE 1: an ON-BODY photo of a model wearing a jersey set. This is your CANVAS — keep the model, pose, body, skin, hair, face, shoes, props, lighting, camera angle, and background EXACTLY as-is.
+- IMAGE 2: the FINAL ${colorName} jersey design (already approved). This is your DESIGN REFERENCE — the on-body jersey must match this EXACTLY in colour, graphics, stripes, panels, logos, number, name, trim, waistband and every print.
+
+TASK: Repaint the jersey + shorts worn by the model in IMAGE 1 so they become a 1:1 replica of the jersey + shorts shown in IMAGE 2.
+
+STRICT RULES:
+- Base fabric colour: ${hexMain} (${colorName}) — must match IMAGE 2 exactly.
+- Number / name text colour: ${textContrast} — match IMAGE 2.
+- Copy every graphic, stripe, side panel, logo, trim, waistband detail, collar, sleeve edge, sublimation pattern from IMAGE 2 onto the model's garment in IMAGE 1, in the same positions and proportions (adapted to the model's pose and fabric folds).
+- Do NOT change the model, pose, body, skin tone, hair, face, hands, shoes, basketball, background, lighting, or camera.
+- Do NOT invent any design element that is not in IMAGE 2.
+- Output must be a clean, sharp, high-resolution on-body product photo, photorealistic, with realistic fabric folds and shading consistent with IMAGE 1's lighting.${noteSection}`;
+}
+
 export function darkenHex(hex: string, amount: number = 40): string {
   const h = hex.replace("#", "");
   const clamp = (v: number) => Math.max(0, Math.min(255, v));
