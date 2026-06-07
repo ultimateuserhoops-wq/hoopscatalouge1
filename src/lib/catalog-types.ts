@@ -55,7 +55,7 @@ export interface CatalogTheme {
   text_color: string;
   subtext_color: string;
   is_active: boolean | null;
-  display_bg?: string | null;
+  display_bg?: string;
 }
 
 export type DisplayMode = "jersey" | "body" | "motion";
