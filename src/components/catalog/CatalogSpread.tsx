@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
-import { Sparkles, Scissors, Palette, Heart, Loader2, Shirt, User, Film, Download } from "lucide-react";
+import { Sparkles, Scissors, Palette, Heart, Loader2, Shirt, User, Film, Download, Video, Wand2 } from "lucide-react";
 import type { ColorVariant, DisplayMode, Product, SpecRow } from "@/lib/catalog-types";
 import { JerseySVG } from "./JerseySVG";
 import { hexToRgba, callGemini, BG_REMOVAL_PROMPT, getLeftPageBg, buildMatchBgPrompt, buildColorVariationPrompt, getAIErrorMessage, readFileAsDataURL, resizeImage, downloadImageHD } from "@/lib/gemini";
 import { notify } from "@/lib/toast";
 import { ProductDisplayUpload } from "@/components/ProductDisplayUpload";
+import { useServerFn } from "@tanstack/react-start";
+import { generateVeoPrompt, startKieVideo, pollKieVideo } from "@/lib/kie-video.functions";
 
 interface Props {
   product: Product;
@@ -18,6 +20,7 @@ interface Props {
   updateColorVariant: (id: string, patch: Partial<ColorVariant>) => void;
   isAdmin?: boolean;
   activeThemeId?: string;
+  updateProduct?: (patch: Partial<Product>) => void;
 }
 
 
@@ -26,6 +29,13 @@ export function CatalogSpread(p: Props) {
   const [aiBusy, setAiBusy] = useState<string | null>(null);
   const [genId, setGenId] = useState<string | null>(null);
   const [customPreview, setCustomPreview] = useState<ColorVariant | null>(null);
+  const [videoModal, setVideoModal] = useState(false);
+  const [videoPrompt, setVideoPrompt] = useState<string>(product.motion_video_prompt || "");
+  const [videoStage, setVideoStage] = useState<"idle" | "prompt" | "starting" | "polling">("idle");
+  const [videoStatus, setVideoStatus] = useState<string>("");
+  const genPromptFn = useServerFn(generateVeoPrompt);
+  const startVideoFn = useServerFn(startKieVideo);
+  const pollVideoFn = useServerFn(pollKieVideo);
 
   const activeColor = customPreview ?? realActiveColor;
 
@@ -37,6 +47,7 @@ export function CatalogSpread(p: Props) {
   const fieldMap = { jersey: "jersey_photo", body: "body_photo", motion: "motion_gif" } as const;
   const currentPhoto = activeColor ? (activeColor[fieldMap[displayMode]] as string | null) : null;
   const canGenerate = !!p.isAdmin && displayMode === "jersey" && !!sourceColor && !customPreview;
+  const productVideo = product.motion_video_url || null;
 
   function selectPreset(id: string) {
     setCustomPreview(null);
@@ -133,6 +144,73 @@ export function CatalogSpread(p: Props) {
     }
   }
 
+  async function handleGeneratePrompt() {
+    setVideoStage("prompt");
+    setVideoStatus("Writing Veo prompt with AI…");
+    try {
+      const colors = colorVariants.map((c) => ({ name: c.name, hex: c.hex_main }));
+      const { prompt } = await genPromptFn({
+        data: {
+          productName: product.name,
+          productCategory: product.category || "basketball apparel",
+          colors,
+        },
+      });
+      setVideoPrompt(prompt);
+      setVideoStatus("Prompt ready — review and edit, then generate.");
+    } catch (e: any) {
+      notify(e?.message || "Prompt generation failed", true);
+      setVideoStatus("");
+    } finally {
+      setVideoStage("idle");
+    }
+  }
+
+  async function handleGenerateVideo() {
+    if (!videoPrompt.trim()) {
+      notify("Generate or enter a prompt first", true);
+      return;
+    }
+    setVideoStage("starting");
+    setVideoStatus("Submitting job to KIE.AI Veo 3.1…");
+    try {
+      const { taskId } = await startVideoFn({
+        data: { prompt: videoPrompt.trim(), aspectRatio: "16:9", model: "veo3_1_fast" },
+      });
+      p.updateProduct?.({ motion_video_task_id: taskId, motion_video_prompt: videoPrompt.trim() });
+      setVideoStage("polling");
+      setVideoStatus("Rendering video (this takes 1–3 min)…");
+
+      // poll every 8s up to ~5 min
+      for (let i = 0; i < 40; i++) {
+        await new Promise((r) => setTimeout(r, 8000));
+        try {
+          const res = await pollVideoFn({ data: { taskId } });
+          if (res.status === "success" && res.videoUrl) {
+            p.updateProduct?.({ motion_video_url: res.videoUrl });
+            setVideoStatus("Video ready!");
+            notify("Video generated");
+            setVideoStage("idle");
+            setVideoModal(false);
+            return;
+          }
+          if (res.status === "failed") {
+            throw new Error(res.errorMessage || "KIE reported failed");
+          }
+          setVideoStatus(`Rendering… (${(i + 1) * 8}s elapsed)`);
+        } catch (err: any) {
+          // transient — keep polling unless many failures
+          if (i > 5) throw err;
+        }
+      }
+      throw new Error("Timed out — check KIE dashboard or retry");
+    } catch (e: any) {
+      notify(e?.message || "Video generation failed", true);
+      setVideoStatus("");
+      setVideoStage("idle");
+    }
+  }
+
   const haloColor = activeColor ? hexToRgba(activeColor.hex_main, 0.28) : "transparent";
   const leftPageBg = p.activeThemeId === "white" ? "#f0ebe0" : "#0a0a0a";
   const isWhiteTheme = p.activeThemeId === "white";
@@ -225,14 +303,25 @@ export function CatalogSpread(p: Props) {
               )}
               {displayMode === "motion" && (
                 <div style={{ position: "absolute", inset: 0 }}>
-                  <ProductDisplayUpload colorId={p.activeColorId} slotType="motion" isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
-                    {activeColor?.motion_gif
-                      ? <img src={activeColor.motion_gif} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", mixBlendMode: "normal" }} />
-                      : <div className="w-full h-full flex flex-col items-center justify-center text-center" style={{ color: "var(--t-subtext)" }}>
-                          <div className="text-5xl">🎞</div>
-                          <div className="text-[0.6rem] font-condensed tracking-widest mt-2">MOTION GIF</div>
-                        </div>}
-                  </ProductDisplayUpload>
+                  {productVideo ? (
+                    <video
+                      src={productVideo}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      style={{ width: "100%", height: "100%", objectFit: "contain", background: "transparent" }}
+                    />
+                  ) : (
+                    <ProductDisplayUpload colorId={p.activeColorId} slotType="motion" isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
+                      {activeColor?.motion_gif
+                        ? <img src={activeColor.motion_gif} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", mixBlendMode: "normal" }} />
+                        : <div className="w-full h-full flex flex-col items-center justify-center text-center" style={{ color: "var(--t-subtext)" }}>
+                            <div className="text-5xl">🎞</div>
+                            <div className="text-[0.6rem] font-condensed tracking-widest mt-2">MOTION VIDEO</div>
+                          </div>}
+                    </ProductDisplayUpload>
+                  )}
                 </div>
               )}
             </div>
@@ -243,6 +332,18 @@ export function CatalogSpread(p: Props) {
                 <ActionBtn onClick={runGenerate} disabled={!!aiBusy}>
                   <Sparkles size={11} /> {activeColor?.jersey_photo ? "REGENERATE" : "GENERATE"} {activeColor!.name.split(" ").pop()}
                 </ActionBtn>
+              )}
+              {p.isAdmin && displayMode === "motion" && (
+                <>
+                  <ActionBtn onClick={() => { setVideoPrompt(product.motion_video_prompt || ""); setVideoModal(true); }} disabled={!!aiBusy}>
+                    <Video size={11} /> {productVideo ? "REGEN VIDEO" : "GEN VIDEO"}
+                  </ActionBtn>
+                  {productVideo && (
+                    <ActionBtn onClick={() => p.updateProduct?.({ motion_video_url: null })} disabled={!!aiBusy}>
+                      <Scissors size={11} /> CLEAR
+                    </ActionBtn>
+                  )}
+                </>
               )}
               {!!currentPhoto && (
                 <>
@@ -395,6 +496,97 @@ export function CatalogSpread(p: Props) {
       {/* Book spine */}
       <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 pointer-events-none z-10"
         style={{ width: 2, background: "var(--t-spine)", boxShadow: "0 0 20px var(--t-glow)" }} />
+
+      {videoModal && (
+        <div
+          onClick={() => videoStage === "idle" && setVideoModal(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 100,
+            background: "rgba(0,0,0,0.78)", backdropFilter: "blur(6px)",
+            display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "min(640px, 100%)", background: "#111", border: "1px solid rgba(255,255,255,0.12)",
+              borderRadius: 8, padding: 20, color: "#f2ede3",
+              fontFamily: "'Barlow Condensed', sans-serif",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <div style={{ fontSize: "0.9rem", letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 700 }}>
+                <Video size={14} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} />
+                Generate Motion Video · Veo 3.1
+              </div>
+              <button onClick={() => videoStage === "idle" && setVideoModal(false)}
+                style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", fontSize: "1rem" }}>✕</button>
+            </div>
+
+            <div style={{ fontSize: "0.62rem", letterSpacing: "0.18em", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", marginBottom: 6 }}>
+              Step 1 · Prompt
+            </div>
+            <button
+              onClick={handleGeneratePrompt}
+              disabled={videoStage !== "idle"}
+              style={{
+                width: "100%", padding: "8px 12px", marginBottom: 10,
+                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)",
+                color: "#fff", fontSize: "0.72rem", letterSpacing: "0.18em", textTransform: "uppercase",
+                fontWeight: 700, cursor: videoStage === "idle" ? "pointer" : "not-allowed",
+                borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              }}>
+              {videoStage === "prompt" ? <Loader2 size={12} className="animate-spin" /> : <Wand2 size={12} />}
+              {videoStage === "prompt" ? "Writing…" : "Auto-write prompt from product + colorways"}
+            </button>
+
+            <textarea
+              value={videoPrompt}
+              onChange={(e) => setVideoPrompt(e.target.value)}
+              placeholder="Veo 3.1 prompt will appear here — you can edit before generating."
+              rows={8}
+              style={{
+                width: "100%", background: "#0a0a0a", color: "#f2ede3",
+                border: "1px solid rgba(255,255,255,0.12)", borderRadius: 4,
+                padding: 10, fontFamily: "ui-monospace, monospace", fontSize: "0.72rem",
+                resize: "vertical", outline: "none", marginBottom: 14,
+              }}
+            />
+
+            <div style={{ fontSize: "0.62rem", letterSpacing: "0.18em", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", marginBottom: 6 }}>
+              Step 2 · Render
+            </div>
+            <button
+              onClick={handleGenerateVideo}
+              disabled={videoStage !== "idle" || !videoPrompt.trim()}
+              style={{
+                width: "100%", padding: "10px 12px",
+                background: "var(--t-accent)", border: "none", color: "#fff",
+                fontSize: "0.78rem", letterSpacing: "0.2em", textTransform: "uppercase",
+                fontWeight: 700, cursor: (videoStage === "idle" && videoPrompt.trim()) ? "pointer" : "not-allowed",
+                borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                opacity: (videoStage === "idle" && videoPrompt.trim()) ? 1 : 0.5,
+              }}>
+              {videoStage === "starting" || videoStage === "polling"
+                ? <Loader2 size={14} className="animate-spin" />
+                : <Video size={14} />}
+              {videoStage === "starting" ? "Submitting…"
+                : videoStage === "polling" ? "Rendering with Veo 3.1…"
+                : "Generate video (~1–3 min)"}
+            </button>
+
+            {videoStatus && (
+              <div style={{ marginTop: 10, fontSize: "0.7rem", color: "rgba(255,255,255,0.7)", textAlign: "center" }}>
+                {videoStatus}
+              </div>
+            )}
+
+            <div style={{ marginTop: 14, fontSize: "0.6rem", color: "rgba(255,255,255,0.4)", letterSpacing: "0.05em", lineHeight: 1.5 }}>
+              The generated video is shared across all {colorVariants.length} colorways of this product and plays automatically in the Motion view.
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -119,6 +119,7 @@ function CatalogPage() {
             displayMode={cat.displayMode}
             setDisplayMode={cat.setDisplayMode}
             updateColorVariant={cat.updateColorVariant}
+            updateProduct={cat.updateProduct}
             isAdmin={isAuthed}
             activeThemeId={cat.themes?.find((t) => t.is_active)?.theme_id}
           />
