@@ -42,7 +42,7 @@ function CatalogPage() {
 
   useEffect(() => {
     function updateScale() {
-      const scale = Math.min((window.innerWidth * 0.9) / 880, (window.innerHeight * 0.78) / 570);
+      const scale = Math.min((window.innerWidth * 0.98) / 880, (window.innerHeight * 0.92) / 570);
       document.documentElement.style.setProperty("--catalog-scale", String(scale));
     }
     updateScale();
