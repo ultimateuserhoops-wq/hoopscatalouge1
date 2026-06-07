@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { TemplateSet } from "@/lib/catalog-types";
+import { TEMPLATE_IMAGE_FIELDS, uploadImageFieldsInUpdates } from "@/lib/storage";
 
 export function useTemplateSet(productId: string | null | undefined) {
   const [templateSet, setTemplateSet] = useState<TemplateSet | null>(null);
@@ -22,6 +23,10 @@ export function useTemplateSet(productId: string | null | undefined) {
   const updateTemplate = useCallback(async (updates: Partial<TemplateSet>) => {
     if (!productId) return;
     setTemplateSet((prev) => (prev ? { ...prev, ...updates } : prev));
+    const persisted = await uploadImageFieldsInUpdates(updates as Record<string, any>, TEMPLATE_IMAGE_FIELDS, "templates");
+    if (persisted !== updates) {
+      setTemplateSet((prev) => (prev ? { ...prev, ...(persisted as Partial<TemplateSet>) } : prev));
+    }
     const { data: existing } = await supabase
       .from("template_sets")
       .select("id")
@@ -30,7 +35,7 @@ export function useTemplateSet(productId: string | null | undefined) {
     if (existing?.id) {
       const { data } = await supabase
         .from("template_sets")
-        .update(updates)
+        .update(persisted)
         .eq("id", existing.id)
         .select()
         .single();
@@ -38,7 +43,7 @@ export function useTemplateSet(productId: string | null | undefined) {
     } else {
       const { data } = await supabase
         .from("template_sets")
-        .insert({ product_id: productId, name: "Default Template", ...updates })
+        .insert({ product_id: productId, name: "Default Template", ...persisted })
         .select()
         .single();
       if (data) setTemplateSet(data as TemplateSet);

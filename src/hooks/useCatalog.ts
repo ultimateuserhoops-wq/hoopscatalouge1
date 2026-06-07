@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { hexToRgba, loadGeminiKeyFromDb } from "@/lib/gemini";
 import type { CatalogTheme, ColorVariant, DisplayMode, Product, SpecRow } from "@/lib/catalog-types";
+import { COLOR_IMAGE_FIELDS, uploadImageFieldsInUpdates, migrateBase64ToStorage } from "@/lib/storage";
+
+let migrationStarted = false;
 
 export function applyThemeToRoot(t: CatalogTheme) {
   const root = document.documentElement;
@@ -34,6 +37,13 @@ export function useCatalog(productSku?: string | null) {
       if (active) applyThemeToRoot(active);
     });
     loadGeminiKeyFromDb().catch(() => {});
+    if (!migrationStarted) {
+      migrationStarted = true;
+      // Fire-and-forget; converts any legacy base64 rows to storage URLs in the background.
+      migrateBase64ToStorage().then(({ migrated }) => {
+        if (migrated > 0) console.info(`[storage] migrated ${migrated} legacy base64 image(s) to storage`);
+      }).catch((e) => console.warn("[storage] migration error", e));
+    }
   }, []);
 
   // Load product (and its colors + specs) whenever sku changes
@@ -67,8 +77,14 @@ export function useCatalog(productSku?: string | null) {
   const activeColor = colorVariants.find((c) => c.id === activeColorId) || colorVariants[0] || null;
 
   const updateColorVariant = useCallback(async (id: string, updates: Partial<ColorVariant>) => {
+    // Optimistic UI shows base64/URL immediately
     setColorVariants((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
-    await supabase.from("color_variants").update(updates).eq("id", id);
+    // Upload any base64 image fields to storage and persist URLs instead of base64
+    const persisted = await uploadImageFieldsInUpdates(updates as Record<string, any>, COLOR_IMAGE_FIELDS, "colors");
+    if (persisted !== updates) {
+      setColorVariants((prev) => prev.map((c) => (c.id === id ? { ...c, ...(persisted as Partial<ColorVariant>) } : c)));
+    }
+    await supabase.from("color_variants").update(persisted).eq("id", id);
   }, []);
 
   const updateProduct = useCallback(async (updates: Partial<Product>) => {
