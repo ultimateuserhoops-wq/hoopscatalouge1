@@ -303,14 +303,25 @@ export function CatalogSpread(p: Props) {
               )}
               {displayMode === "motion" && (
                 <div style={{ position: "absolute", inset: 0 }}>
-                  <ProductDisplayUpload colorId={p.activeColorId} slotType="motion" isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
-                    {activeColor?.motion_gif
-                      ? <img src={activeColor.motion_gif} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", mixBlendMode: "normal" }} />
-                      : <div className="w-full h-full flex flex-col items-center justify-center text-center" style={{ color: "var(--t-subtext)" }}>
-                          <div className="text-5xl">🎞</div>
-                          <div className="text-[0.6rem] font-condensed tracking-widest mt-2">MOTION GIF</div>
-                        </div>}
-                  </ProductDisplayUpload>
+                  {productVideo ? (
+                    <video
+                      src={productVideo}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      style={{ width: "100%", height: "100%", objectFit: "contain", background: "transparent" }}
+                    />
+                  ) : (
+                    <ProductDisplayUpload colorId={p.activeColorId} slotType="motion" isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
+                      {activeColor?.motion_gif
+                        ? <img src={activeColor.motion_gif} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", mixBlendMode: "normal" }} />
+                        : <div className="w-full h-full flex flex-col items-center justify-center text-center" style={{ color: "var(--t-subtext)" }}>
+                            <div className="text-5xl">🎞</div>
+                            <div className="text-[0.6rem] font-condensed tracking-widest mt-2">MOTION VIDEO</div>
+                          </div>}
+                    </ProductDisplayUpload>
+                  )}
                 </div>
               )}
             </div>
@@ -321,6 +332,18 @@ export function CatalogSpread(p: Props) {
                 <ActionBtn onClick={runGenerate} disabled={!!aiBusy}>
                   <Sparkles size={11} /> {activeColor?.jersey_photo ? "REGENERATE" : "GENERATE"} {activeColor!.name.split(" ").pop()}
                 </ActionBtn>
+              )}
+              {p.isAdmin && displayMode === "motion" && (
+                <>
+                  <ActionBtn onClick={() => { setVideoPrompt(product.motion_video_prompt || ""); setVideoModal(true); }} disabled={!!aiBusy}>
+                    <Video size={11} /> {productVideo ? "REGEN VIDEO" : "GEN VIDEO"}
+                  </ActionBtn>
+                  {productVideo && (
+                    <ActionBtn onClick={() => p.updateProduct?.({ motion_video_url: null })} disabled={!!aiBusy}>
+                      <Scissors size={11} /> CLEAR
+                    </ActionBtn>
+                  )}
+                </>
               )}
               {!!currentPhoto && (
                 <>
