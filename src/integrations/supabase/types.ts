@@ -198,6 +198,9 @@ export type Database = {
           cta_label: string | null
           description: string | null
           id: string
+          motion_video_prompt: string | null
+          motion_video_task_id: string | null
+          motion_video_url: string | null
           name: string
           page_left: string | null
           page_right: string | null
@@ -217,6 +220,9 @@ export type Database = {
           cta_label?: string | null
           description?: string | null
           id?: string
+          motion_video_prompt?: string | null
+          motion_video_task_id?: string | null
+          motion_video_url?: string | null
           name?: string
           page_left?: string | null
           page_right?: string | null
@@ -236,6 +242,9 @@ export type Database = {
           cta_label?: string | null
           description?: string | null
           id?: string
+          motion_video_prompt?: string | null
+          motion_video_task_id?: string | null
+          motion_video_url?: string | null
           name?: string
           page_left?: string | null
           page_right?: string | null
