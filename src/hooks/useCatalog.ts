@@ -17,6 +17,7 @@ export function applyThemeToRoot(t: CatalogTheme) {
   root.style.setProperty("--t-border", hexToRgba(t.text_color, 0.07));
   root.style.setProperty("--t-glow", hexToRgba(t.accent, 0.22));
   root.style.setProperty("--t-spine", t.accent);
+  root.style.setProperty("--t-display-bg", t.display_bg || "#ffffff");
 }
 
 export function useCatalog(productSku?: string | null) {
