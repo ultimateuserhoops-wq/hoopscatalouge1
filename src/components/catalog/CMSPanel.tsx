@@ -169,6 +169,8 @@ function ColorsTab({ keyInput, setKeyInput, productId, productSku, colorVariants
   const [generatingJerseyFor, setGeneratingJerseyFor] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(colorVariants[0]?.id || null);
   const [batchBusy, setBatchBusy] = useState<string | null>(null);
+  // The primary reference jersey for THIS product — generated variants are recolored from it,
+  // so the style/template stays consistent with the product's own jersey (not another product's).
   const sourceColor = colorVariants.find((c) => c.jersey_photo) || null;
   const missing = colorVariants.filter((c) => !c.jersey_photo && c.id !== sourceColor?.id);
 
