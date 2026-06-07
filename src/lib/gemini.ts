@@ -59,18 +59,39 @@ export function isLightColor(hex: string): boolean {
 export function resizeImage(dataUrl: string, maxSide = 1024): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
+    img.crossOrigin = "anonymous";
     img.onload = () => {
       const longest = Math.max(img.width, img.height);
-      if (longest <= maxSide) { resolve(dataUrl); return; }
       const scale = maxSide / longest;
+      const w = longest <= maxSide ? img.width : Math.round(img.width * scale);
+      const h = longest <= maxSide ? img.height : Math.round(img.height * scale);
       const canvas = document.createElement("canvas");
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
-      canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL("image/jpeg", 0.92));
+      canvas.width = w;
+      canvas.height = h;
+      try {
+        canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", 0.92));
+      } catch {
+        resolve(dataUrl);
+      }
     };
     img.onerror = () => resolve(dataUrl);
     img.src = dataUrl;
+  });
+}
+
+async function toDataUrl(src: string): Promise<string> {
+  if (!src) return src;
+  if (src.startsWith("data:")) return src;
+  // Fetch http(s) URLs (e.g. Supabase Storage) and convert to data URL
+  const res = await fetch(src, { mode: "cors", cache: "no-cache" });
+  if (!res.ok) throw new Error(`Failed to fetch image (${res.status})`);
+  const blob = await res.blob();
+  return await new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result as string);
+    r.onerror = reject;
+    r.readAsDataURL(blob);
   });
 }
 
@@ -103,9 +124,11 @@ async function callGeminiImages(imageDataUrls: string[], promptText: string, max
 
   const parts: any[] = [];
   for (const url of imageDataUrls) {
-    const resized = await resizeImage(url, maxSide);
+    const dataUrl = await toDataUrl(url);
+    const resized = await resizeImage(dataUrl, maxSide);
 
     const base64 = resized.split(",")[1];
+    if (!base64) throw new Error("Invalid image data");
     const mimeMatch = resized.match(/data:([^;]+);/);
     const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
     parts.push({ inline_data: { mime_type: mimeType, data: base64 } });
