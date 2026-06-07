@@ -107,7 +107,7 @@ export function CatalogSpread(p: Props) {
     if (!activeColor || !currentPhoto) return;
     setAiBusy("Matching background…");
     try {
-      const bg = getLeftPageBg(p.activeThemeId);
+      const bg = p.activeTheme?.display_bg || getLeftPageBg(p.activeThemeId);
       const result = await callGemini(currentPhoto, buildMatchBgPrompt(bg));
       p.updateColorVariant(activeColor.id, { [fieldMap[displayMode]]: result } as any);
       notify("Background matched");
