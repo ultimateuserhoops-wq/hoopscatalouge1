@@ -83,7 +83,7 @@ export async function migrateBase64ToStorage(onProgress?: (msg: string) => void)
         } catch { failed++; }
       }
     }
-    if (Object.keys(patch).length) await supabase.from("color_variants").update(patch).eq("id", row.id);
+    if (Object.keys(patch).length) await supabase.from("color_variants").update(patch as any).eq("id", row.id);
   }
 
   const { data: templates } = await supabase.from("template_sets").select("id, template_jersey, template_back, template_shorts");
@@ -102,7 +102,7 @@ export async function migrateBase64ToStorage(onProgress?: (msg: string) => void)
         } catch { failed++; }
       }
     }
-    if (Object.keys(patch).length) await supabase.from("template_sets").update(patch).eq("id", row.id);
+    if (Object.keys(patch).length) await supabase.from("template_sets").update(patch as any).eq("id", row.id);
   }
 
   return { migrated, failed };
