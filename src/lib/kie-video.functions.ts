@@ -12,7 +12,7 @@ function getKieKey() {
 
 function buildFallbackVeoPrompt(productName: string, productCategory: string, colors: { name: string; hex: string }[]) {
   const colorNames = colors.map((c) => `${c.name} ${c.hex}`).join(" → ");
-  return `Cinematic 8-second Veo 3.1 basketball product video of a pro player on an indoor court wearing the ${productName} ${productCategory}. Slow-motion 35mm tracking shot: dribble, crossover, drive, then explosive dunk or fade-away jumper. The uniform visibly cycles through these colorways in sync with the action beats: ${colorNames}. Dramatic rim lighting, dust particles, sweat detail, shallow depth of field, low-angle hero camera, 24fps cinema. No captions, no added text, no extra logos.`;
+  return `Cinematic 5-second Veo 3.1 basketball product video of a pro player on an indoor court wearing the ${productName} ${productCategory}. Slow-motion 35mm tracking shot: dribble, crossover, drive, then explosive dunk or fade-away jumper. The uniform visibly cycles through these colorways in sync with the action beats: ${colorNames}. Dramatic rim lighting, dust particles, sweat detail, shallow depth of field, low-angle hero camera, 24fps cinema. No captions, no added text, no extra logos.`;
 }
 
 function readTextContent(value: any): string {
@@ -66,7 +66,7 @@ export const generateVeoPrompt = createServerFn({ method: "POST" })
       .join("\n");
 
     const system =
-      "You are a creative director writing prompts for Google Veo 3.1 to generate cinematic 8-second basketball product videos. Output ONLY the final prompt text — no preamble, no headings, no quotes.";
+      "You are a creative director writing prompts for Google Veo 3.1 to generate cinematic 5-second basketball product videos. Output ONLY the final prompt text — no preamble, no headings, no quotes.";
 
     const user = `Write a single, vivid Veo 3.1 video prompt (max 700 chars) for this product:
 
