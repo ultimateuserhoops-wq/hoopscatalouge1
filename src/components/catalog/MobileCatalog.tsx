@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Settings, Sparkles, Scissors, Palette, Loader2, Shirt, Film, X, Info, ListChecks, ShoppingCart, Paintbrush, ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
+import { Settings, Sparkles, Scissors, Palette, Loader2, Shirt, User, Film, X, Info, ListChecks, ShoppingCart, Paintbrush, ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
 import { useSwipe } from "@/hooks/useSwipe";
 
 import type { CatalogTheme, ColorVariant, DisplayMode, Product, SpecRow } from "@/lib/catalog-types";
