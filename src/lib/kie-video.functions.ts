@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 const KIE_BASE = "https://api.kie.ai/api/v1/veo";
-const KIE_CHAT = "https://api.kie.ai/v1/chat/completions";
+const KIE_CHAT = "https://api.kie.ai/api/v1/chat/completions";
 
 function getKieKey() {
   const k = process.env.KIE_API_KEY;
