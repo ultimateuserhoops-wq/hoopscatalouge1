@@ -175,7 +175,7 @@ export function CatalogSpread(p: Props) {
     setVideoStatus("Submitting job to KIE.AI Veo 3.1…");
     try {
       const { taskId } = await startVideoFn({
-        data: { prompt: videoPrompt.trim(), aspectRatio: "16:9", model: "veo3_fast" },
+        data: { prompt: videoPrompt.trim(), aspectRatio: "16:9" },
       });
       p.updateProduct?.({ motion_video_task_id: taskId, motion_video_prompt: videoPrompt.trim() });
       setVideoStage("polling");
