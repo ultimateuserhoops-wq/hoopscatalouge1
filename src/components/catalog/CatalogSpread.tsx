@@ -289,7 +289,7 @@ export function CatalogSpread(p: Props) {
                 <div style={{ position: "absolute", inset: 0 }}>
                   <ProductDisplayUpload colorId={p.activeColorId} slotType="jersey" isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
                     {activeColor?.jersey_photo
-                      ? <img src={activeColor.jersey_photo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center bottom", mixBlendMode: "normal" }} />
+                      ? <img loading="lazy" decoding="async" src={activeColor.jersey_photo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center bottom", mixBlendMode: "normal" }} />
                       : activeColor && <JerseySVG hexMain={activeColor.hex_main} hexShade={activeColor.hex_shade || activeColor.hex_main} isLight={!!activeColor.is_light} category={product.category || undefined} />}
                   </ProductDisplayUpload>
                 </div>
@@ -298,7 +298,7 @@ export function CatalogSpread(p: Props) {
                 <div style={{ position: "absolute", inset: 0 }}>
                   <ProductDisplayUpload colorId={p.activeColorId} slotType="body" isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
                     {activeColor?.body_photo
-                      ? <img src={activeColor.body_photo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center bottom", mixBlendMode: "normal" }} />
+                      ? <img loading="lazy" decoding="async" src={activeColor.body_photo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center bottom", mixBlendMode: "normal" }} />
                       : <div className="w-full h-full flex flex-col items-center justify-center text-center" style={{ color: "var(--t-subtext)" }}>
                           <div className="text-5xl">🧍</div>
                           <div className="text-[0.6rem] font-condensed tracking-widest mt-2">ON-BODY PHOTO</div>
@@ -320,7 +320,7 @@ export function CatalogSpread(p: Props) {
                   ) : (
                     <ProductDisplayUpload colorId={p.activeColorId} slotType="motion" isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
                       {activeColor?.motion_gif
-                        ? <img src={activeColor.motion_gif} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", mixBlendMode: "normal" }} />
+                        ? <img loading="lazy" decoding="async" src={activeColor.motion_gif} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", mixBlendMode: "normal" }} />
                         : <div className="w-full h-full flex flex-col items-center justify-center text-center" style={{ color: "var(--t-subtext)" }}>
                             <div className="text-5xl">🎞</div>
                             <div className="text-[0.6rem] font-condensed tracking-widest mt-2">MOTION VIDEO</div>
@@ -615,7 +615,7 @@ function ColorCard({ color, isActive, onClick, canGenerate, hasPhoto, onGenerate
     <div style={{ position: "relative", overflow: "visible", height: 46 }} onClick={onClick} className="cursor-pointer group">
       <div style={{ position: "absolute", inset: 0, overflow: "hidden", borderRadius: 4, border: isActive ? "2px solid var(--t-accent)" : "1px solid var(--t-border)" }}>
         {color.jersey_photo
-          ? <img src={color.jersey_photo} alt="" className="w-full h-full object-cover" />
+          ? <img loading="lazy" decoding="async" src={color.jersey_photo} alt="" className="w-full h-full object-cover" />
           : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${color.hex_main}, ${color.hex_shade || color.hex_main})` }} />
         }
         <div className="absolute bottom-0 inset-x-0 text-center text-[0.45rem] font-condensed tracking-widest text-white bg-black/60 py-0.5 truncate">

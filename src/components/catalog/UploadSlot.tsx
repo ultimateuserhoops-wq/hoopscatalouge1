@@ -103,7 +103,7 @@ export function UploadSlot({ color, slot, icon, label, accept, allowRecolor, sou
       )}
       {photo && (
         <>
-          <img src={photo} alt={label} className="w-full h-[68px] object-cover" />
+          <img loading="lazy" decoding="async" src={photo} alt={label} className="w-full h-[68px] object-cover" />
           <button
             onClick={() => downloadImageHD(photo, `${color.name.replace(/\s+/g, "-").toLowerCase()}-${slot}.${slot === "motion" ? "gif" : "png"}`, 2400)}
             className="absolute top-1 right-6 w-4 h-4 rounded-full bg-black/70 border border-white/20 text-white text-[10px] flex items-center justify-center hover:bg-black"
