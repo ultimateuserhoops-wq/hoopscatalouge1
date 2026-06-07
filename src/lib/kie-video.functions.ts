@@ -123,7 +123,7 @@ export const startKieVideo = createServerFn({ method: "POST" })
       .object({
         prompt: z.string().min(10).max(2000),
         aspectRatio: z.enum(["16:9", "9:16"]).default("16:9"),
-        model: z.enum(["veo3_1_fast", "veo3_1"]).default("veo3_1_fast"),
+        model: z.enum(["veo3_fast", "veo3"]).default("veo3_fast"),
       })
       .parse(input)
   )
