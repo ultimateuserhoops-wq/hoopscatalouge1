@@ -2,12 +2,43 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 const KIE_BASE = "https://api.kie.ai/api/v1/veo";
-const KIE_CHAT = "https://api.kie.ai/api/v1/chat/completions";
+const KIE_CHAT = "https://api.kie.ai/claude/v1/messages";
 
 function getKieKey() {
   const k = process.env.KIE_API_KEY;
   if (!k) throw new Error("KIE_API_KEY missing on server");
   return k;
+}
+
+function buildFallbackVeoPrompt(productName: string, productCategory: string, colors: { name: string; hex: string }[]) {
+  const colorNames = colors.map((c) => `${c.name} ${c.hex}`).join(" → ");
+  return `Cinematic 8-second Veo 3.1 basketball product video of a pro player on an indoor court wearing the ${productName} ${productCategory}. Slow-motion 35mm tracking shot: dribble, crossover, drive, then explosive dunk or fade-away jumper. The uniform visibly cycles through these colorways in sync with the action beats: ${colorNames}. Dramatic rim lighting, dust particles, sweat detail, shallow depth of field, low-angle hero camera, 24fps cinema. No captions, no added text, no extra logos.`;
+}
+
+function readTextContent(value: any): string {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    return value
+      .map((part) =>
+        typeof part === "string"
+          ? part
+          : part?.type === "text" || part?.text
+            ? readTextContent(part.text)
+            : readTextContent(part?.content)
+      )
+      .join("");
+  }
+  if (value && typeof value === "object") {
+    return readTextContent(
+      value.text ??
+        value.content ??
+        value.output_text ??
+        value.message?.content ??
+        value.choices?.[0]?.message?.content ??
+        value.choices?.[0]?.delta?.content
+    );
+  }
+  return "";
 }
 
 // 1) Build Veo prompt using Lovable AI from product + colorways
@@ -60,11 +91,12 @@ Write the prompt now as one flowing paragraph.`;
         Authorization: `Bearer ${getKieKey()}`,
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-5-20250929",
+        model: "claude-sonnet-4-5",
         messages: [
-          { role: "system", content: system },
-          { role: "user", content: user },
+          { role: "user", content: `${system}\n\n${user}` },
         ],
+        stream: false,
+        max_tokens: 700,
       }),
     });
 
@@ -75,27 +107,11 @@ Write the prompt now as one flowing paragraph.`;
       throw new Error(`KIE chat error ${res.status}: ${t.slice(0, 200)}`);
     }
     const json = await res.json();
-    // KIE may wrap response as { code, msg, data: {...} } or return OpenAI shape directly
     const payload = json?.data ?? json;
-    const choice =
-      payload?.choices?.[0]?.message?.content ??
-      payload?.choices?.[0]?.delta?.content ??
-      payload?.message?.content ??
-      payload?.content ??
-      payload?.output_text ??
-      payload?.text;
-    const raw = choice;
-    const prompt = (typeof raw === "string"
-      ? raw
-      : Array.isArray(raw)
-        ? raw.map((p: any) => p?.text || "").join("")
-        : ""
-    ).trim();
+    const prompt = readTextContent(payload).trim();
     if (!prompt) {
       console.error("KIE chat empty response:", JSON.stringify(json).slice(0, 800));
-      throw new Error(
-        `Empty prompt from Claude. Response: ${JSON.stringify(json).slice(0, 300)}`
-      );
+      return { prompt: buildFallbackVeoPrompt(data.productName, data.productCategory, data.colors) };
     }
     return { prompt };
   });
