@@ -120,10 +120,12 @@ export function MobileCatalog({ spreadIndex, setSpreadIndex, cat, isAdmin, cmsOp
           }} aria-label="Settings"><Settings size={13} /></button>
         ) : (
           <a href="/auth" style={{
-            background: "none", border: "1px solid var(--t-border)", color: "var(--t-subtext)",
-            width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-            textDecoration: "none",
-          }} aria-label="Admin Sign In"><User size={13} /></a>
+            background: "var(--t-accent)", border: "1px solid var(--t-accent)", color: "#fff",
+            height: 28, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center",
+            textDecoration: "none", padding: "0 10px", fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase",
+            whiteSpace: "nowrap",
+          }} aria-label="Admin Sign In">Login</a>
         )}
       </div>
 
