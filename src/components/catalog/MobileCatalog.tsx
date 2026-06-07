@@ -113,11 +113,17 @@ export function MobileCatalog({ spreadIndex, setSpreadIndex, cat, isAdmin, cmsOp
           color: canNext ? "#fff" : "var(--t-subtext)",
           width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", opacity: canNext ? 1 : 0.4,
         }} aria-label="Next"><ChevronRight size={14} /></button>
-        {isAdmin && (
+        {isAdmin ? (
           <button onClick={() => setCmsOpen(true)} style={{
             background: "none", border: "1px solid var(--t-border)", color: "var(--t-subtext)",
             width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
           }} aria-label="Settings"><Settings size={13} /></button>
+        ) : (
+          <a href="/auth" style={{
+            background: "none", border: "1px solid var(--t-border)", color: "var(--t-subtext)",
+            width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+            textDecoration: "none",
+          }} aria-label="Admin Sign In"><User size={13} /></a>
         )}
       </div>
 
