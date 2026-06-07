@@ -496,6 +496,97 @@ export function CatalogSpread(p: Props) {
       {/* Book spine */}
       <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 pointer-events-none z-10"
         style={{ width: 2, background: "var(--t-spine)", boxShadow: "0 0 20px var(--t-glow)" }} />
+
+      {videoModal && (
+        <div
+          onClick={() => videoStage === "idle" && setVideoModal(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 100,
+            background: "rgba(0,0,0,0.78)", backdropFilter: "blur(6px)",
+            display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "min(640px, 100%)", background: "#111", border: "1px solid rgba(255,255,255,0.12)",
+              borderRadius: 8, padding: 20, color: "#f2ede3",
+              fontFamily: "'Barlow Condensed', sans-serif",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <div style={{ fontSize: "0.9rem", letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 700 }}>
+                <Video size={14} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} />
+                Generate Motion Video · Veo 3.1
+              </div>
+              <button onClick={() => videoStage === "idle" && setVideoModal(false)}
+                style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", fontSize: "1rem" }}>✕</button>
+            </div>
+
+            <div style={{ fontSize: "0.62rem", letterSpacing: "0.18em", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", marginBottom: 6 }}>
+              Step 1 · Prompt
+            </div>
+            <button
+              onClick={handleGeneratePrompt}
+              disabled={videoStage !== "idle"}
+              style={{
+                width: "100%", padding: "8px 12px", marginBottom: 10,
+                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)",
+                color: "#fff", fontSize: "0.72rem", letterSpacing: "0.18em", textTransform: "uppercase",
+                fontWeight: 700, cursor: videoStage === "idle" ? "pointer" : "not-allowed",
+                borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              }}>
+              {videoStage === "prompt" ? <Loader2 size={12} className="animate-spin" /> : <Wand2 size={12} />}
+              {videoStage === "prompt" ? "Writing…" : "Auto-write prompt from product + colorways"}
+            </button>
+
+            <textarea
+              value={videoPrompt}
+              onChange={(e) => setVideoPrompt(e.target.value)}
+              placeholder="Veo 3.1 prompt will appear here — you can edit before generating."
+              rows={8}
+              style={{
+                width: "100%", background: "#0a0a0a", color: "#f2ede3",
+                border: "1px solid rgba(255,255,255,0.12)", borderRadius: 4,
+                padding: 10, fontFamily: "ui-monospace, monospace", fontSize: "0.72rem",
+                resize: "vertical", outline: "none", marginBottom: 14,
+              }}
+            />
+
+            <div style={{ fontSize: "0.62rem", letterSpacing: "0.18em", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", marginBottom: 6 }}>
+              Step 2 · Render
+            </div>
+            <button
+              onClick={handleGenerateVideo}
+              disabled={videoStage !== "idle" || !videoPrompt.trim()}
+              style={{
+                width: "100%", padding: "10px 12px",
+                background: "var(--t-accent)", border: "none", color: "#fff",
+                fontSize: "0.78rem", letterSpacing: "0.2em", textTransform: "uppercase",
+                fontWeight: 700, cursor: (videoStage === "idle" && videoPrompt.trim()) ? "pointer" : "not-allowed",
+                borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                opacity: (videoStage === "idle" && videoPrompt.trim()) ? 1 : 0.5,
+              }}>
+              {videoStage === "starting" || videoStage === "polling"
+                ? <Loader2 size={14} className="animate-spin" />
+                : <Video size={14} />}
+              {videoStage === "starting" ? "Submitting…"
+                : videoStage === "polling" ? "Rendering with Veo 3.1…"
+                : "Generate video (~1–3 min)"}
+            </button>
+
+            {videoStatus && (
+              <div style={{ marginTop: 10, fontSize: "0.7rem", color: "rgba(255,255,255,0.7)", textAlign: "center" }}>
+                {videoStatus}
+              </div>
+            )}
+
+            <div style={{ marginTop: 14, fontSize: "0.6rem", color: "rgba(255,255,255,0.4)", letterSpacing: "0.05em", lineHeight: 1.5 }}>
+              The generated video is shared across all {colorVariants.length} colorways of this product and plays automatically in the Motion view.
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
