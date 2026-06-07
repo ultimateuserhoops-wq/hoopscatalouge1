@@ -138,6 +138,7 @@ export const startKieVideo = createServerFn({ method: "POST" })
         prompt: data.prompt,
         model: data.model,
         aspectRatio: data.aspectRatio,
+        duration: 5,
       }),
     });
     const json = await res.json().catch(() => ({}));
