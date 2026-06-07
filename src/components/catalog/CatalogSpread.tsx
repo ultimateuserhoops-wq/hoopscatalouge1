@@ -29,6 +29,13 @@ export function CatalogSpread(p: Props) {
   const [aiBusy, setAiBusy] = useState<string | null>(null);
   const [genId, setGenId] = useState<string | null>(null);
   const [customPreview, setCustomPreview] = useState<ColorVariant | null>(null);
+  const [videoModal, setVideoModal] = useState(false);
+  const [videoPrompt, setVideoPrompt] = useState<string>(product.motion_video_prompt || "");
+  const [videoStage, setVideoStage] = useState<"idle" | "prompt" | "starting" | "polling">("idle");
+  const [videoStatus, setVideoStatus] = useState<string>("");
+  const genPromptFn = useServerFn(generateVeoPrompt);
+  const startVideoFn = useServerFn(startKieVideo);
+  const pollVideoFn = useServerFn(pollKieVideo);
 
   const activeColor = customPreview ?? realActiveColor;
 
@@ -40,6 +47,7 @@ export function CatalogSpread(p: Props) {
   const fieldMap = { jersey: "jersey_photo", body: "body_photo", motion: "motion_gif" } as const;
   const currentPhoto = activeColor ? (activeColor[fieldMap[displayMode]] as string | null) : null;
   const canGenerate = !!p.isAdmin && displayMode === "jersey" && !!sourceColor && !customPreview;
+  const productVideo = product.motion_video_url || null;
 
   function selectPreset(id: string) {
     setCustomPreview(null);
@@ -133,6 +141,73 @@ export function CatalogSpread(p: Props) {
       notify(`${label} photo uploaded`);
     } catch {
       notify("Upload failed — try again", true);
+    }
+  }
+
+  async function handleGeneratePrompt() {
+    setVideoStage("prompt");
+    setVideoStatus("Writing Veo prompt with AI…");
+    try {
+      const colors = colorVariants.map((c) => ({ name: c.name, hex: c.hex_main }));
+      const { prompt } = await genPromptFn({
+        data: {
+          productName: product.name,
+          productCategory: product.category || "basketball apparel",
+          colors,
+        },
+      });
+      setVideoPrompt(prompt);
+      setVideoStatus("Prompt ready — review and edit, then generate.");
+    } catch (e: any) {
+      notify(e?.message || "Prompt generation failed", true);
+      setVideoStatus("");
+    } finally {
+      setVideoStage("idle");
+    }
+  }
+
+  async function handleGenerateVideo() {
+    if (!videoPrompt.trim()) {
+      notify("Generate or enter a prompt first", true);
+      return;
+    }
+    setVideoStage("starting");
+    setVideoStatus("Submitting job to KIE.AI Veo 3.1…");
+    try {
+      const { taskId } = await startVideoFn({
+        data: { prompt: videoPrompt.trim(), aspectRatio: "16:9", model: "veo3_1_fast" },
+      });
+      p.updateProduct?.({ motion_video_task_id: taskId, motion_video_prompt: videoPrompt.trim() });
+      setVideoStage("polling");
+      setVideoStatus("Rendering video (this takes 1–3 min)…");
+
+      // poll every 8s up to ~5 min
+      for (let i = 0; i < 40; i++) {
+        await new Promise((r) => setTimeout(r, 8000));
+        try {
+          const res = await pollVideoFn({ data: { taskId } });
+          if (res.status === "success" && res.videoUrl) {
+            p.updateProduct?.({ motion_video_url: res.videoUrl });
+            setVideoStatus("Video ready!");
+            notify("Video generated");
+            setVideoStage("idle");
+            setVideoModal(false);
+            return;
+          }
+          if (res.status === "failed") {
+            throw new Error(res.errorMessage || "KIE reported failed");
+          }
+          setVideoStatus(`Rendering… (${(i + 1) * 8}s elapsed)`);
+        } catch (err: any) {
+          // transient — keep polling unless many failures
+          if (i > 5) throw err;
+        }
+      }
+      throw new Error("Timed out — check KIE dashboard or retry");
+    } catch (e: any) {
+      notify(e?.message || "Video generation failed", true);
+      setVideoStatus("");
+      setVideoStage("idle");
     }
   }
 
