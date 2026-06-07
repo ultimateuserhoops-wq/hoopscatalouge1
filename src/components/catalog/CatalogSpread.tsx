@@ -40,8 +40,11 @@ export function CatalogSpread(p: Props) {
   const activeColor = customPreview ?? realActiveColor;
 
   const sourceColor = useMemo(
-    () => colorVariants.find((c) => c.jersey_photo && c.id !== realActiveColor?.id) || null,
-    [colorVariants, realActiveColor?.id]
+    // Always use the first variant (in sort order) of THIS product that has a jersey photo
+    // as the style/template reference. Never use a previously-generated sibling — that would
+    // drift away from the original product's jersey style.
+    () => colorVariants.find((c) => !!c.jersey_photo) || null,
+    [colorVariants]
   );
 
   const fieldMap = { jersey: "jersey_photo", body: "body_photo", motion: "motion_gif" } as const;
@@ -112,7 +115,9 @@ export function CatalogSpread(p: Props) {
   }
 
   async function generateForCard(target: ColorVariant) {
-    const src = colorVariants.find((c) => c.jersey_photo && c.id !== target.id);
+    // Same rule as sourceColor: always recolor from the product's primary reference jersey.
+    const src = colorVariants.find((c) => !!c.jersey_photo && c.id !== target.id)
+      ?? colorVariants.find((c) => !!c.jersey_photo);
     if (!src?.jersey_photo) return;
     setGenId(target.id);
     try {
