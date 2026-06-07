@@ -231,63 +231,29 @@ function computeGraphicColor(hexMain: string, trimColor: string): string {
 export function buildColorVariationPrompt(
   hexMain: string, hexShade: string, colorName: string, isLight: boolean, note?: string | null
 ) {
-  const trimColor = computeContrastTrim(hexMain);
-  const graphicColor = computeGraphicColor(hexMain, trimColor);
   const textContrast = isLight ? "dark charcoal (#1a1a1a)" : "white (#FFFFFF)";
-  const noteSection = note?.trim() ? `\n\nADDITIONAL DESIGNER NOTES FROM THE HOOPS TEAM:\n${note.trim()}` : "";
+  const noteSection = note?.trim() ? `\n\nADDITIONAL DESIGNER NOTES:\n${note.trim()}` : "";
 
-  return `You are a professional sportswear colorist. Recolor this basketball jersey photo to the ${colorName} colorway.
+  return `You are a professional sportswear colorist. Produce a ${colorName} colorway of THIS EXACT jersey by recoloring only — do not redesign.
 
-PRIMARY COLOR: ${hexMain}
-TRIM / ACCENT COLOR: ${trimColor}
-GRAPHIC / STAR COLOR: ${graphicColor}
-TEXT COLOR: ${textContrast}
+TARGET COLOR: ${hexMain} (use ${hexShade} for fabric shadows / darker folds)
+NUMBER & NAME TEXT: ${textContrast}
 
-ZONE-BY-ZONE RECOLOR INSTRUCTIONS:
+RECOLOR RULE — preserve the source design 1:1:
+- Look at the source image and identify every design element on the jersey and shorts: graphics, logos, stripes, panels, patterns, trims, waistband, collar, side tape, prints, textures.
+- Keep EVERY one of those elements in EXACTLY the same shape, position, size, layout, and proportion.
+- Recolor the main fabric (jersey body + shorts main panels) to ${hexMain}.
+- For all OTHER design elements (stripes, graphics, logos, trims, patterns), keep their EXISTING relative color relationships from the source: if a stripe was lighter than the body in the source, it stays lighter; if a graphic was white/light in the source, it stays white/light; if a trim was a gradient of accent colors, keep that same gradient (just harmonized with the new base color where needed for contrast).
+- The player number and name keep ${textContrast}.
 
-1. PRIMARY FABRIC (body front, body back, shorts main panels):
-   → ${hexMain} (use ${hexShade} for fold shadows and darker fabric areas)
+ABSOLUTELY DO NOT:
+- Do NOT invent new stripes, side panels, star patterns, tape, or any graphic that is not in the source.
+- Do NOT remove, move, resize, or restyle any existing graphic, stripe, or logo.
+- Do NOT change the jersey cut, neckline shape, armhole shape, shorts length, or silhouette.
+- Do NOT change the model (skin, face, hair, body, pose, shoes, socks, basketball) or the background.
+- Do NOT change fabric texture or lighting direction.
 
-2. SIDE PANELS (vertical stripes on jersey sides and shorts sides):
-   → ${trimColor}
-
-3. DECORATIVE GRAPHICS ON SIDE PANELS (stars, geometric shapes, patterns printed on the side panels):
-   → ${graphicColor}
-   → These graphics MUST be clearly VISIBLE and DISTINCT against the ${trimColor} side panel
-   → Do NOT make them the same color as the side panel background
-
-4. COLLAR / NECKLINE:
-   → ${trimColor}
-
-5. SLEEVE EDGES / ARMHOLE TRIM:
-   → ${trimColor}
-
-6. WAISTBAND / HEM STRIPE:
-   → ${trimColor}
-
-7. PLAYER NUMBER:
-   → Fill: ${textContrast}
-   → Outline / drop shadow: ${trimColor}
-
-8. PLAYER NAME / TEAM NAME:
-   → ${textContrast}
-
-9. LOGOS (Nike swoosh, league patches on fabric):
-   → Use ${graphicColor} on trim areas, ${textContrast} on body areas — whichever reads better
-
-10. JERSEY vs BACKGROUND CONTRAST:
-    → The jersey must stand out clearly from any background
-    → Ensure the overall jersey silhouette has strong visual presence
-    → If the primary color ${hexMain} is light, add subtle shadow/depth around the jersey edges to separate it from the background
-
-CRITICAL DO NOT CHANGE:
-- Model's skin, face, hair, body, shoes — unchanged
-- Jersey template, cut, silhouette, proportions — unchanged
-- Fabric texture and realistic lighting/shadow — unchanged
-- Background environment — unchanged
-- Do NOT remove any design element; do NOT add new elements
-
-The result must look like a professionally designed ${colorName} colorway with clearly visible trim details and graphics.${noteSection}`;
+Think of this as a fabric dye change on the same exact garment — every print, panel and trim from the source must appear in the result in the same place, only the base fabric color changes to ${hexMain}.${noteSection}`;
 }
 
 export function darkenHex(hex: string, amount: number = 40): string {
