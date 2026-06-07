@@ -9,7 +9,7 @@ import { CoverSpread } from "@/components/catalog/spreads/CoverSpread";
 import { MenuSpread } from "@/components/catalog/spreads/MenuSpread";
 import { SizeSpread } from "@/components/catalog/spreads/SizeSpread";
 import { ContactSpread } from "@/components/catalog/spreads/ContactSpread";
-import { CATALOG_SPREADS, TOTAL_PAGES } from "@/lib/catalog-spreads";
+import { useSpreads } from "@/hooks/useSpreads";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -30,9 +30,11 @@ function CatalogPage() {
   const [cmsOpen, setCmsOpen] = useState(false);
   const [isAuthed, setIsAuthed] = useState(false);
   const isMobile = useIsMobile();
+  const { spreads, totalPages, addProductPage, deleteSpread } = useSpreads();
 
-  const currentSpread = CATALOG_SPREADS[spreadIndex];
-  const cat = useCatalog(currentSpread.productSku ?? null);
+  const safeIndex = Math.min(spreadIndex, Math.max(0, spreads.length - 1));
+  const currentSpread = spreads[safeIndex];
+  const cat = useCatalog(currentSpread?.productSku ?? null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setIsAuthed(!!data.session));
@@ -53,44 +55,55 @@ function CatalogPage() {
   // Keyboard navigation
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "ArrowRight") setSpreadIndex((i) => Math.min(CATALOG_SPREADS.length - 1, i + 1));
+      if (e.key === "ArrowRight") setSpreadIndex((i) => Math.min(spreads.length - 1, i + 1));
       else if (e.key === "ArrowLeft") setSpreadIndex((i) => Math.max(0, i - 1));
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [spreads.length]);
 
-  const canPrev = spreadIndex > 0;
-  const canNext = spreadIndex < CATALOG_SPREADS.length - 1;
+  const canPrev = safeIndex > 0;
+  const canNext = safeIndex < spreads.length - 1;
 
   function jumpToCategory(category: string) {
-    const i = CATALOG_SPREADS.findIndex((s) => s.category === category || (s.type === "size" && category === "SIZE GUIDE") || (s.type === "contact" && category === "CONTACT & ORDER"));
+    const i = spreads.findIndex((s) => s.category === category || (s.type === "size" && category === "SIZE GUIDE") || (s.type === "contact" && category === "CONTACT & ORDER"));
     if (i >= 0) setSpreadIndex(i);
   }
 
-  const spreadOptions = useMemo(() => CATALOG_SPREADS.map((s, i) => ({ value: i, label: s.label })), []);
+  const spreadOptions = useMemo(() => spreads.map((s, i) => ({ value: i, label: s.label })), [spreads]);
 
   if (isMobile) {
     return (
       <MobileCatalog
-        spreadIndex={spreadIndex}
+        spreadIndex={safeIndex}
         setSpreadIndex={setSpreadIndex}
         cat={cat}
         isAdmin={isAuthed}
         cmsOpen={cmsOpen}
         setCmsOpen={setCmsOpen}
+        spreads={spreads}
+        totalPages={totalPages}
+        addProductPage={addProductPage}
+        deleteSpread={deleteSpread}
       />
     );
   }
 
   const renderSpread = () => {
+    if (!currentSpread) {
+      return (
+        <div className="catalog-themed flex items-center justify-center" style={{ width: 880, height: 570, background: "var(--t-surface)" }}>
+          <div className="text-white/40 font-condensed tracking-widest text-xs">LOADING…</div>
+        </div>
+      );
+    }
     switch (currentSpread.type) {
       case "cover":
         return <CoverSpread />;
       case "menu":
         return (
           <MenuSpread
-            menuIndex={spreadIndex === 1 ? 0 : 1}
+            menuIndex={safeIndex === 1 ? 0 : 1}
             pageLeft={currentSpread.pageLeft}
             pageRight={currentSpread.pageRight}
             onJump={jumpToCategory}
@@ -168,7 +181,7 @@ function CatalogPage() {
         </button>
 
         <select
-          value={spreadIndex}
+          value={safeIndex}
           onChange={(e) => setSpreadIndex(Number(e.target.value))}
           style={{
             background: "rgba(0,0,0,0.7)", border: "1px solid var(--t-border)",
@@ -187,11 +200,11 @@ function CatalogPage() {
           fontSize: "0.6rem", letterSpacing: "0.2em", color: "var(--t-subtext)",
           textTransform: "uppercase", minWidth: 90, textAlign: "center",
         }}>
-          {currentSpread.pageLeft.toString().padStart(2, "0")}–{currentSpread.pageRight.toString().padStart(2, "0")} / {TOTAL_PAGES}
+          {currentSpread ? `${currentSpread.pageLeft.toString().padStart(2, "0")}–${currentSpread.pageRight.toString().padStart(2, "0")}` : "--"} / {totalPages}
         </div>
 
         <button
-          onClick={() => setSpreadIndex((i) => Math.min(CATALOG_SPREADS.length - 1, i + 1))}
+          onClick={() => setSpreadIndex((i) => Math.min(spreads.length - 1, i + 1))}
           disabled={!canNext}
           className="font-condensed flex items-center gap-1 px-3 py-1.5 rounded"
           style={{
@@ -205,7 +218,7 @@ function CatalogPage() {
         </button>
       </div>
 
-      {isAuthed && cat.product && (
+      {isAuthed && (
         <CMSPanel
           open={cmsOpen}
           onClose={() => setCmsOpen(false)}
@@ -222,6 +235,10 @@ function CatalogPage() {
           deleteSpec={cat.deleteSpec}
           selectTheme={cat.selectTheme}
           updateCustomTheme={cat.updateCustomTheme}
+          spreads={spreads}
+          addProductPage={addProductPage}
+          deleteSpread={deleteSpread}
+          onSpreadChange={(i) => setSpreadIndex(i)}
         />
       )}
     </main>
