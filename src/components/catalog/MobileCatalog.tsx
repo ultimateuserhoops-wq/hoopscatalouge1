@@ -7,7 +7,7 @@ import { JerseySVG } from "./JerseySVG";
 import { ProductDisplayUpload } from "@/components/ProductDisplayUpload";
 import { hexToRgba, callGemini, BG_REMOVAL_PROMPT, getCurrentThemeBg, buildMatchBgPrompt, buildColorVariationPrompt, getAIErrorMessage, readFileAsDataURL, resizeImage } from "@/lib/gemini";
 import { notify } from "@/lib/toast";
-import { CATALOG_SPREADS, TOTAL_PAGES, MENU_PAGES } from "@/lib/catalog-spreads";
+import { MENU_PAGES, type SpreadDef } from "@/lib/catalog-spreads";
 import { CMSPanel } from "./CMSPanel";
 
 type CatalogCtx = {
@@ -39,14 +39,18 @@ interface ShellProps {
   isAdmin: boolean;
   cmsOpen: boolean;
   setCmsOpen: (v: boolean) => void;
+  spreads: SpreadDef[];
+  totalPages: number;
+  addProductPage: (opts: { name: string; category: string; sku?: string }) => Promise<{ sku: string; spreadId: string }>;
+  deleteSpread: (spread_id: string) => Promise<void>;
 }
 
-export function MobileCatalog({ spreadIndex, setSpreadIndex, cat, isAdmin, cmsOpen, setCmsOpen }: ShellProps) {
-  const current = CATALOG_SPREADS[spreadIndex];
+export function MobileCatalog({ spreadIndex, setSpreadIndex, cat, isAdmin, cmsOpen, setCmsOpen, spreads, totalPages, addProductPage, deleteSpread }: ShellProps) {
+  const current = spreads[spreadIndex];
   const canPrev = spreadIndex > 0;
-  const canNext = spreadIndex < CATALOG_SPREADS.length - 1;
+  const canNext = spreadIndex < spreads.length - 1;
 
-  const goNext = () => { if (canNext) setSpreadIndex((i) => Math.min(CATALOG_SPREADS.length - 1, i + 1)); };
+  const goNext = () => { if (canNext) setSpreadIndex((i) => Math.min(spreads.length - 1, i + 1)); };
   const goPrev = () => { if (canPrev) setSpreadIndex((i) => Math.max(0, i - 1)); };
 
   // Keyboard arrow support
@@ -77,11 +81,19 @@ export function MobileCatalog({ spreadIndex, setSpreadIndex, cat, isAdmin, cmsOp
   });
 
   function jumpToCategory(category: string) {
-    const i = CATALOG_SPREADS.findIndex((s) => s.category === category || (s.type === "size" && category === "SIZE GUIDE") || (s.type === "contact" && category === "CONTACT & ORDER"));
+    const i = spreads.findIndex((s) => s.category === category || (s.type === "size" && category === "SIZE GUIDE") || (s.type === "contact" && category === "CONTACT & ORDER"));
     if (i >= 0) setSpreadIndex(i);
   }
 
 
+
+  if (!current) {
+    return (
+      <div className="catalog-themed" style={{ width: "100vw", height: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--t-bg)", color: "var(--t-subtext)" }}>
+        LOADING…
+      </div>
+    );
+  }
 
   return (
     <div className="catalog-themed" style={{
@@ -106,9 +118,9 @@ export function MobileCatalog({ spreadIndex, setSpreadIndex, cat, isAdmin, cmsOp
             fontSize: "0.66rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", padding: "0 8px",
           }}
         >
-          {CATALOG_SPREADS.map((s, i) => <option key={s.id} value={i}>{s.label}</option>)}
+          {spreads.map((s, i) => <option key={s.id} value={i}>{s.label}</option>)}
         </select>
-        <button onClick={() => setSpreadIndex((i) => Math.min(CATALOG_SPREADS.length - 1, i + 1))} disabled={!canNext} style={{
+        <button onClick={() => setSpreadIndex((i) => Math.min(spreads.length - 1, i + 1))} disabled={!canNext} style={{
           background: canNext ? "var(--t-accent)" : "none", border: "1px solid var(--t-border)",
           color: canNext ? "#fff" : "var(--t-subtext)",
           width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", opacity: canNext ? 1 : 0.4,
@@ -151,10 +163,10 @@ export function MobileCatalog({ spreadIndex, setSpreadIndex, cat, isAdmin, cmsOp
         letterSpacing: "0.25em", color: "var(--t-subtext)", textTransform: "uppercase",
         paddingBottom: "calc(2px + env(safe-area-inset-bottom, 0px))",
       }}>
-        Page {String(current.pageLeft).padStart(2, "0")}–{String(current.pageRight).padStart(2, "0")} of {TOTAL_PAGES}
+        Page {String(current.pageLeft).padStart(2, "0")}–{String(current.pageRight).padStart(2, "0")} of {totalPages}
       </div>
 
-      {isAdmin && cat.product && (
+      {isAdmin && (
         <CMSPanel
           open={cmsOpen}
           onClose={() => setCmsOpen(false)}
@@ -171,6 +183,10 @@ export function MobileCatalog({ spreadIndex, setSpreadIndex, cat, isAdmin, cmsOp
           deleteSpec={cat.deleteSpec}
           selectTheme={cat.selectTheme}
           updateCustomTheme={cat.updateCustomTheme}
+          spreads={spreads}
+          addProductPage={addProductPage}
+          deleteSpread={deleteSpread}
+          onSpreadChange={(i) => setSpreadIndex(i)}
         />
       )}
     </div>
