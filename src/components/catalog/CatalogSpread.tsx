@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
-import { Sparkles, Scissors, Palette, Heart, Loader2, Shirt, User, Film, Download } from "lucide-react";
+import { Sparkles, Scissors, Palette, Heart, Loader2, Shirt, User, Film, Download, Video, Wand2 } from "lucide-react";
 import type { ColorVariant, DisplayMode, Product, SpecRow } from "@/lib/catalog-types";
 import { JerseySVG } from "./JerseySVG";
 import { hexToRgba, callGemini, BG_REMOVAL_PROMPT, getLeftPageBg, buildMatchBgPrompt, buildColorVariationPrompt, getAIErrorMessage, readFileAsDataURL, resizeImage, downloadImageHD } from "@/lib/gemini";
 import { notify } from "@/lib/toast";
 import { ProductDisplayUpload } from "@/components/ProductDisplayUpload";
+import { useServerFn } from "@tanstack/react-start";
+import { generateVeoPrompt, startKieVideo, pollKieVideo } from "@/lib/kie-video.functions";
 
 interface Props {
   product: Product;
@@ -18,6 +20,7 @@ interface Props {
   updateColorVariant: (id: string, patch: Partial<ColorVariant>) => void;
   isAdmin?: boolean;
   activeThemeId?: string;
+  updateProduct?: (patch: Partial<Product>) => void;
 }
 
 
