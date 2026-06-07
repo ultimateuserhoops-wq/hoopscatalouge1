@@ -39,10 +39,13 @@ export function useCatalog(productSku?: string | null) {
     loadGeminiKeyFromDb().catch(() => {});
     if (!migrationStarted) {
       migrationStarted = true;
-      // Fire-and-forget; converts any legacy base64 rows to storage URLs in the background.
-      migrateBase64ToStorage().then(({ migrated }) => {
-        if (migrated > 0) console.info(`[storage] migrated ${migrated} legacy base64 image(s) to storage`);
-      }).catch((e) => console.warn("[storage] migration error", e));
+      // Only signed-in users can write to storage; skip for public viewers.
+      supabase.auth.getSession().then(({ data }) => {
+        if (!data.session) return;
+        migrateBase64ToStorage().then(({ migrated }) => {
+          if (migrated > 0) console.info(`[storage] migrated ${migrated} legacy base64 image(s) to storage`);
+        }).catch((e) => console.warn("[storage] migration error", e));
+      });
     }
   }, []);
 
