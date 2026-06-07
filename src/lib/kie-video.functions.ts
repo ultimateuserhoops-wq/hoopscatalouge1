@@ -2,17 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 const KIE_BASE = "https://api.kie.ai/api/v1/veo";
-const LOVABLE_AI = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const KIE_CHAT = "https://api.kie.ai/v1/chat/completions";
 
 function getKieKey() {
   const k = process.env.KIE_API_KEY;
   if (!k) throw new Error("KIE_API_KEY missing on server");
-  return k;
-}
-
-function getLovableKey() {
-  const k = process.env.LOVABLE_API_KEY;
-  if (!k) throw new Error("LOVABLE_API_KEY missing");
   return k;
 }
 
@@ -59,14 +53,14 @@ ${colorList}
 
 Write the prompt now as one flowing paragraph.`;
 
-    const res = await fetch(LOVABLE_AI, {
+    const res = await fetch(KIE_CHAT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${getLovableKey()}`,
+        Authorization: `Bearer ${getKieKey()}`,
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "claude-sonnet-4-5-20250929",
         messages: [
           { role: "system", content: system },
           { role: "user", content: user },
@@ -74,15 +68,21 @@ Write the prompt now as one flowing paragraph.`;
       }),
     });
 
-    if (res.status === 429) throw new Error("Rate limit — try again shortly");
-    if (res.status === 402) throw new Error("AI credits exhausted — add credits in workspace settings");
+    if (res.status === 429) throw new Error("KIE rate limit — try again shortly");
+    if (res.status === 401) throw new Error("KIE_API_KEY invalid");
     if (!res.ok) {
       const t = await res.text().catch(() => "");
-      throw new Error(`AI gateway error ${res.status}: ${t.slice(0, 200)}`);
+      throw new Error(`KIE chat error ${res.status}: ${t.slice(0, 200)}`);
     }
     const json = await res.json();
-    const prompt = (json?.choices?.[0]?.message?.content || "").trim();
-    if (!prompt) throw new Error("Empty prompt from AI");
+    const raw = json?.choices?.[0]?.message?.content;
+    const prompt = (typeof raw === "string"
+      ? raw
+      : Array.isArray(raw)
+        ? raw.map((p: any) => p?.text || "").join("")
+        : ""
+    ).trim();
+    if (!prompt) throw new Error("Empty prompt from Claude");
     return { prompt };
   });
 
