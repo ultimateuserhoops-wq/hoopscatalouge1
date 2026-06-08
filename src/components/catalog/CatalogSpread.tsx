@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Scissors, Palette, Heart, Loader2, Shirt, User, Film, Download, Video, Wand2 } from "lucide-react";
 import type { ColorVariant, DisplayMode, Product, SpecRow } from "@/lib/catalog-types";
 import { JerseySVG } from "./JerseySVG";
-import { hexToRgba, callGemini, BG_REMOVAL_PROMPT, getLeftPageBg, buildMatchBgPrompt, buildColorVariationPrompt, getAIErrorMessage, readFileAsDataURL, resizeImage, downloadImageHD } from "@/lib/gemini";
+import { hexToRgba, callGemini, BG_REMOVAL_PROMPT, getLeftPageBg, buildMatchBgPrompt, buildColorVariationPrompt, getAIErrorMessage, readFileAsDataURL, resizeImage, downloadImageHD, compositeOntoBackground } from "@/lib/gemini";
 import { notify } from "@/lib/toast";
 import { ProductDisplayUpload } from "@/components/ProductDisplayUpload";
 import { useServerFn } from "@tanstack/react-start";
@@ -97,7 +97,9 @@ export function CatalogSpread(p: Props) {
     setAiBusy("Removing background…");
     try {
       const transparent = await callGemini(currentPhoto, BG_REMOVAL_PROMPT);
-      p.updateColorVariant(activeColor.id, { [fieldMap[displayMode]]: transparent } as any);
+      const bg = p.activeTheme?.display_bg || getLeftPageBg(p.activeThemeId);
+      const flat = await compositeOntoBackground(transparent, bg);
+      p.updateColorVariant(activeColor.id, { [fieldMap[displayMode]]: flat } as any);
       notify("Background removed");
     } catch (e) { notify(getAIErrorMessage(e), true); }
     finally { setAiBusy(null); }
