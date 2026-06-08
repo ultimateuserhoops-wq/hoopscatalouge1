@@ -3,6 +3,7 @@ import { X, Plus, Trash2, Sparkles, LogOut, Check, Upload, Wand2, Download, File
 import type { CatalogTheme, ColorVariant, Product, SpecRow, TemplateSet } from "@/lib/catalog-types";
 import type { SpreadDef } from "@/lib/catalog-spreads";
 import { UploadSlot } from "./UploadSlot";
+import { GalleryEditor } from "./GalleryEditor";
 import { buildColorVariationPrompt, buildJerseyDisplayPrompt, callGemini, callGeminiTwoImages, downloadImageHD, getAIErrorMessage, loadGeminiKeyFromDb, readFileAsDataURL, resizeImage, saveGeminiKeyToDb } from "@/lib/gemini";
 
 import { notify } from "@/lib/toast";
@@ -10,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTemplateSet } from "@/hooks/useTemplateSet";
 import { useNavigate } from "@tanstack/react-router";
 
-type Tab = "theme" | "pages" | "info" | "colors" | "specs" | "page";
+type Tab = "theme" | "pages" | "info" | "colors" | "specs" | "page" | "gallery";
 
 interface Props {
   open: boolean;
@@ -32,6 +33,7 @@ interface Props {
   addProductPage: (opts: { name: string; category: string; sku?: string }) => Promise<{ sku: string; spreadId: string }>;
   deleteSpread: (spread_id: string) => Promise<void>;
   onSpreadChange?: (index: number) => void;
+  currentSpread?: SpreadDef | null;
 }
 
 export function CMSPanel(p: Props) {
@@ -40,6 +42,11 @@ export function CMSPanel(p: Props) {
   const navigate = useNavigate();
 
   useEffect(() => { if (p.open) loadGeminiKeyFromDb().then((k) => setKeyInput(k || "")); }, [p.open]);
+
+  const isGallery = p.currentSpread?.type === "gallery";
+  useEffect(() => {
+    if (p.open && isGallery) setTab("gallery");
+  }, [p.open, isGallery, p.currentSpread?.id]);
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -63,7 +70,9 @@ export function CMSPanel(p: Props) {
       </div>
 
       <div className="flex border-b border-white/10 text-[0.6rem] font-condensed tracking-widest">
-        {(["theme","pages","info","colors","specs","page"] as Tab[]).map((t) => (
+        {((isGallery
+          ? ["theme","pages","gallery"]
+          : ["theme","pages","info","colors","specs","page"]) as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`flex-1 py-2.5 uppercase ${tab===t?"bg-white/10 text-white":"text-white/50 hover:text-white"}`}>
             {t}
@@ -100,6 +109,9 @@ export function CMSPanel(p: Props) {
         {tab === "page" && (p.product
           ? <PageTab product={p.product} updateProduct={p.updateProduct} />
           : <EmptyProductHint />)}
+        {tab === "gallery" && (isGallery && p.currentSpread
+          ? <GalleryEditor spreadId={p.currentSpread.id} spreadTitle={p.currentSpread.label || p.currentSpread.title} />
+          : <div className="text-[0.65rem] text-white/40 font-condensed tracking-widest uppercase">Open a gallery spread to manage its photos.</div>)}
       </div>
     </div>
   );
