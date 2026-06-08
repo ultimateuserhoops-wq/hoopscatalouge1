@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { hexToRgba, loadGeminiKeyFromDb } from "@/lib/gemini";
 import type { CatalogTheme, ColorVariant, DisplayMode, Product, SpecRow } from "@/lib/catalog-types";
+import type { ProductTier } from "@/lib/catalog-types";
 import { COLOR_IMAGE_FIELDS, uploadImageFieldsInUpdates, migrateBase64ToStorage } from "@/lib/storage";
 
 let migrationStarted = false;
@@ -24,6 +25,8 @@ export function useCatalog(productSku?: string | null) {
   const [product, setProduct] = useState<Product | null>(null);
   const [colorVariants, setColorVariants] = useState<ColorVariant[]>([]);
   const [specRows, setSpecRows] = useState<SpecRow[]>([]);
+  const [productTiers, setProductTiers] = useState<ProductTier[]>([]);
+  const [activeTierKey, setActiveTierKey] = useState<string | null>(null);
   const [themes, setThemes] = useState<CatalogTheme[]>([]);
   const [activeColorId, setActiveColorId] = useState<string | null>(null);
   const [displayMode, setDisplayMode] = useState<DisplayMode>("jersey");
@@ -62,16 +65,20 @@ export function useCatalog(productSku?: string | null) {
     setProduct(prod);
 
     if (prod) {
-      const [cRes, sRes] = await Promise.all([
+      const [cRes, sRes, tRes] = await Promise.all([
         supabase.from("color_variants").select("*").eq("product_id", prod.id).order("sort_order"),
         supabase.from("spec_rows").select("*").eq("product_id", prod.id).order("sort_order"),
+        supabase.from("product_tiers" as any).select("*").eq("product_id", prod.id).order("sort_order"),
       ]);
       const cols = (cRes.data as ColorVariant[]) || [];
       setColorVariants(cols);
       setSpecRows((sRes.data as SpecRow[]) || []);
+      const tiers = ((tRes.data as any[]) || []) as ProductTier[];
+      setProductTiers(tiers);
+      setActiveTierKey(tiers[0]?.tier_key ?? null);
       if (cols.length) setActiveColorId(cols[0].id);
     } else {
-      setColorVariants([]); setSpecRows([]);
+      setColorVariants([]); setSpecRows([]); setProductTiers([]); setActiveTierKey(null);
     }
     setLoading(false);
   }, [productSku]);
@@ -132,6 +139,27 @@ export function useCatalog(productSku?: string | null) {
     await supabase.from("spec_rows").delete().eq("id", id);
   }, []);
 
+  const updateTier = useCallback(async (id: string, updates: Partial<ProductTier>) => {
+    setProductTiers((p) => p.map((t) => (t.id === id ? { ...t, ...updates } : t)));
+    await supabase.from("product_tiers" as any).update(updates).eq("id", id);
+  }, []);
+
+  const addTier = useCallback(async () => {
+    if (!product) return;
+    const order = (productTiers[productTiers.length - 1]?.sort_order || 0) + 1;
+    const key = `tier-${Date.now()}`;
+    const { data } = await supabase.from("product_tiers" as any).insert({
+      product_id: product.id, tier_key: key, label: "NEW TIER", price: "—",
+      fabric: "", feature: "", sort_order: order,
+    }).select().single();
+    if (data) setProductTiers((p) => [...p, data as ProductTier]);
+  }, [product, productTiers]);
+
+  const deleteTier = useCallback(async (id: string) => {
+    setProductTiers((p) => p.filter((t) => t.id !== id));
+    await supabase.from("product_tiers" as any).delete().eq("id", id);
+  }, []);
+
   const selectTheme = useCallback(async (theme_id: string) => {
     const t = themes.find((x) => x.theme_id === theme_id);
     if (!t) return;
@@ -175,5 +203,7 @@ export function useCatalog(productSku?: string | null) {
     reload, updateColorVariant, updateProduct,
     addColor, deleteColor, addSpec, updateSpec, deleteSpec,
     selectTheme, updateCustomTheme,
+    productTiers, activeTierKey, setActiveTierKey,
+    updateTier, addTier, deleteTier,
   };
 }
