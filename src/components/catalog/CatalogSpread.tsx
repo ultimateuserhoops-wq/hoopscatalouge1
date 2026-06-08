@@ -564,19 +564,46 @@ export function CatalogSpread(p: Props) {
               <CustomColorCard index={4} isGradient={false} onApply={applyCustomColor} />
             </div>
 
-            {/* Spec grid */}
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {specRows.slice(0, 6).map((s, i) => (
-                <motion.div key={s.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.4 + i * 0.07, ease: "easeOut" }}
-                  className="px-2 py-1.5 rounded" style={{ background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
-                  <div className="text-[0.55rem] tracking-widest font-condensed uppercase" style={{ color: "var(--t-accent)" }}>{s.label}</div>
-                  <div className="text-[0.78rem] font-condensed" style={{ color: "var(--t-text)" }}>{s.value}</div>
-                </motion.div>
-              ))}
-            </div>
+            {(() => {
+              const isJersey = (product.category || "").toUpperCase() === "JERSEYS";
+              const tiers = p.productTiers || [];
+              if (isJersey && tiers.length > 0) {
+                const activeKey = p.activeTierKey || tiers[0].tier_key;
+                const tier = tiers.find((t) => t.tier_key === activeKey) || tiers[0];
+                const cells = [
+                  { label: "Fabric", value: tier.fabric || "—" },
+                  { label: "Feature", value: tier.feature || "—" },
+                ];
+                return (
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    {cells.map((c, i) => (
+                      <motion.div key={`${tier.id}-${c.label}`}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: i * 0.06, ease: "easeOut" }}
+                        className="px-2 py-1.5 rounded" style={{ background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
+                        <div className="text-[0.55rem] tracking-widest font-condensed uppercase" style={{ color: "var(--t-accent)" }}>{c.label}</div>
+                        <div className="text-[0.78rem] font-condensed" style={{ color: "var(--t-text)" }}>{c.value}</div>
+                      </motion.div>
+                    ))}
+                  </div>
+                );
+              }
+              return (
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  {specRows.slice(0, 6).map((s, i) => (
+                    <motion.div key={s.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: 0.4 + i * 0.07, ease: "easeOut" }}
+                      className="px-2 py-1.5 rounded" style={{ background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
+                      <div className="text-[0.55rem] tracking-widest font-condensed uppercase" style={{ color: "var(--t-accent)" }}>{s.label}</div>
+                      <div className="text-[0.78rem] font-condensed" style={{ color: "var(--t-text)" }}>{s.value}</div>
+                    </motion.div>
+                  ))}
+                </div>
+              );
+            })()}
 
             {/* CTA pinned bottom */}
             <div className="mt-auto flex items-center gap-2">
