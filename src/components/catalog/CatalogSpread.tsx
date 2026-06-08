@@ -220,7 +220,6 @@ export function CatalogSpread(p: Props) {
     }
   }
 
-  const haloColor = activeColor ? hexToRgba(activeColor.hex_main, 0.28) : "transparent";
   const leftPageBg = p.activeTheme?.display_bg || (p.activeThemeId === "white" ? "#f0ebe0" : "#ffffff");
   const isLightBg = (() => {
     const h = (leftPageBg || "#ffffff").replace("#", "");
