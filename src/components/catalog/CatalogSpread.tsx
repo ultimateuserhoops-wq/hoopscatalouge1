@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Scissors, Palette, Heart, Loader2, Shirt, User, Film, Download, Video, Wand2 } from "lucide-react";
 import type { ColorVariant, DisplayMode, Product, SpecRow } from "@/lib/catalog-types";
 import { JerseySVG } from "./JerseySVG";
-import { hexToRgba, callGemini, BG_REMOVAL_PROMPT, getLeftPageBg, buildMatchBgPrompt, buildColorVariationPrompt, getAIErrorMessage, readFileAsDataURL, resizeImage, downloadImageHD, compositeOntoBackground } from "@/lib/gemini";
+import { hexToRgba, callGemini, getLeftPageBg, buildMatchBgPrompt, buildColorVariationPrompt, getAIErrorMessage, readFileAsDataURL, resizeImage, downloadImageHD, compositeOntoBackground, buildRemoveBgToSolidPrompt } from "@/lib/gemini";
 import { notify } from "@/lib/toast";
 import { ProductDisplayUpload } from "@/components/ProductDisplayUpload";
 import { useServerFn } from "@tanstack/react-start";
@@ -96,9 +96,9 @@ export function CatalogSpread(p: Props) {
     if (!activeColor || !currentPhoto) return;
     setAiBusy("Removing background…");
     try {
-      const transparent = await callGemini(currentPhoto, BG_REMOVAL_PROMPT);
       const bg = p.activeTheme?.display_bg || getLeftPageBg(p.activeThemeId);
-      const flat = await compositeOntoBackground(transparent, bg);
+      const result = await callGemini(currentPhoto, buildRemoveBgToSolidPrompt(bg));
+      const flat = await compositeOntoBackground(result, bg);
       p.updateColorVariant(activeColor.id, { [fieldMap[displayMode]]: flat } as any);
       notify("Background removed");
     } catch (e) { notify(getAIErrorMessage(e), true); }
@@ -332,7 +332,7 @@ export function CatalogSpread(p: Props) {
                 <div style={{ position: "absolute", inset: 0 }}>
                   <ProductDisplayUpload colorId={p.activeColorId} slotType="jersey" isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
                     {activeColor?.jersey_photo
-                      ? <img loading="lazy" decoding="async" src={activeColor.jersey_photo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center bottom", mixBlendMode: "normal" }} />
+                      ? <img loading="lazy" decoding="async" crossOrigin="anonymous" src={activeColor.jersey_photo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center bottom", mixBlendMode: "normal" }} />
                       : activeColor && <JerseySVG hexMain={activeColor.hex_main} hexShade={activeColor.hex_shade || activeColor.hex_main} isLight={!!activeColor.is_light} category={product.category || undefined} />}
                   </ProductDisplayUpload>
                 </div>
@@ -341,7 +341,7 @@ export function CatalogSpread(p: Props) {
                 <div style={{ position: "absolute", inset: 0 }}>
                   <ProductDisplayUpload colorId={p.activeColorId} slotType="body" isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
                     {activeColor?.body_photo
-                      ? <img loading="lazy" decoding="async" src={activeColor.body_photo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center bottom", mixBlendMode: "normal" }} />
+                      ? <img loading="lazy" decoding="async" crossOrigin="anonymous" src={activeColor.body_photo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center bottom", mixBlendMode: "normal" }} />
                       : <div className="w-full h-full flex flex-col items-center justify-center text-center" style={{ color: "var(--t-subtext)" }}>
                           <div className="text-5xl">🧍</div>
                           <div className="text-[0.6rem] font-condensed tracking-widest mt-2">ON-BODY PHOTO</div>
@@ -363,7 +363,7 @@ export function CatalogSpread(p: Props) {
                   ) : (
                     <ProductDisplayUpload colorId={p.activeColorId} slotType="motion" isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
                       {activeColor?.motion_gif
-                        ? <img loading="lazy" decoding="async" src={activeColor.motion_gif} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", mixBlendMode: "normal" }} />
+                        ? <img loading="lazy" decoding="async" crossOrigin="anonymous" src={activeColor.motion_gif} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", mixBlendMode: "normal" }} />
                         : <div className="w-full h-full flex flex-col items-center justify-center text-center" style={{ color: "var(--t-subtext)" }}>
                             <div className="text-5xl">🎞</div>
                             <div className="text-[0.6rem] font-condensed tracking-widest mt-2">MOTION VIDEO</div>
