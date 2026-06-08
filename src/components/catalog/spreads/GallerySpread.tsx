@@ -15,9 +15,9 @@ import type { SpreadDef } from "@/lib/catalog-spreads";
 
 interface GalleryItem {
   id: string;
-  colorName: string;
-  productName: string;
-  productSku: string;
+  title: string;
+  subtitle: string;
+  sku: string;
   photo: string;
   hexMain: string;
 }
@@ -39,31 +39,19 @@ export function GallerySpread({ spread, isAdmin, full = false }: Props) {
     let cancelled = false;
     async function load() {
       setLoading(true);
-      const { data: products } = await supabase
-        .from("products")
-        .select("id, name, sku, category")
-        .eq("category", spread.category as string);
-      if (!products?.length) {
-        if (!cancelled) { setItems([]); setLoading(false); }
-        return;
-      }
-      const { data: variants } = await supabase
-        .from("color_variants")
-        .select("id, name, hex_main, jersey_photo, product_id, sort_order")
-        .in("product_id", products.map((p) => p.id))
-        .not("jersey_photo", "is", null)
+      const { data: rows } = await supabase
+        .from("gallery_photos")
+        .select("id, photo_url, title, subtitle, hex_color, sort_order")
+        .eq("spread_id", spread.id)
         .order("sort_order");
-      const list: GalleryItem[] = (variants ?? []).map((v: any) => {
-        const p = products.find((pp) => pp.id === v.product_id);
-        return {
-          id: v.id,
-          colorName: v.name,
-          productName: p?.name ?? "",
-          productSku: p?.sku ?? "",
-          photo: v.jersey_photo as string,
-          hexMain: v.hex_main as string,
-        };
-      });
+      const list: GalleryItem[] = (rows ?? []).map((r: any) => ({
+        id: r.id,
+        title: r.title ?? "",
+        subtitle: r.subtitle ?? "",
+        sku: "",
+        photo: r.photo_url as string,
+        hexMain: (r.hex_color as string) || "#FF4D00",
+      }));
       if (!cancelled) {
         setItems(list);
         setActiveIndex(0);
@@ -72,7 +60,7 @@ export function GallerySpread({ spread, isAdmin, full = false }: Props) {
     }
     load();
     return () => { cancelled = true; };
-  }, [spread.category, spread.id]);
+  }, [spread.id]);
 
   const goNext = useCallback(() => {
     setActiveIndex((i) => {
@@ -112,7 +100,7 @@ export function GallerySpread({ spread, isAdmin, full = false }: Props) {
       const transparent = await callGemini(activeItem.photo, buildRemoveBgToSolidPrompt(bg));
       const composited = await compositeOntoBackground(transparent, bg);
       const url = (await uploadDataUrlToStorage(composited, "colors/jersey_photo")) || composited;
-      await supabase.from("color_variants").update({ jersey_photo: url }).eq("id", activeItem.id);
+      await supabase.from("gallery_photos").update({ photo_url: url }).eq("id", activeItem.id);
       setItems((prev) => prev.map((it, i) => (i === activeIndex ? { ...it, photo: url } : it)));
       notify("✓ Background removed");
     } catch (err) {
@@ -188,7 +176,7 @@ export function GallerySpread({ spread, isAdmin, full = false }: Props) {
           >
             <motion.img
               src={activeItem.photo}
-              alt={`${activeItem.productName} — ${activeItem.colorName}`}
+              alt={activeItem.title || "Gallery photo"}
               crossOrigin="anonymous"
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
@@ -255,15 +243,16 @@ export function GallerySpread({ spread, isAdmin, full = false }: Props) {
             transition={{ duration: 0.3, delay: 0.1 }}
             style={{ position: "absolute", left: full ? 20 : 96, bottom: thumbH + 8, zIndex: 12, pointerEvents: "none" }}
           >
-            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.5rem", letterSpacing: "0.28em", color: "rgba(255,255,255,0.3)", textTransform: "uppercase", marginBottom: 3 }}>
-              {activeItem.productSku}
-            </div>
-            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: "1.5rem", letterSpacing: "0.04em", color: "#fff", lineHeight: 1 }}>
-              {activeItem.productName}
-            </div>
-            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.22em", color: "var(--t-accent)", textTransform: "uppercase", marginTop: 2 }}>
-              {activeItem.colorName}
-            </div>
+            {activeItem.title && (
+              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: "1.5rem", letterSpacing: "0.04em", color: "#fff", lineHeight: 1 }}>
+                {activeItem.title}
+              </div>
+            )}
+            {activeItem.subtitle && (
+              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.22em", color: "var(--t-accent)", textTransform: "uppercase", marginTop: 2 }}>
+                {activeItem.subtitle}
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -369,7 +358,7 @@ export function GallerySpread({ spread, isAdmin, full = false }: Props) {
           >
             <img
               src={item.photo}
-              alt={item.colorName}
+              alt={item.title || "Thumbnail"}
               crossOrigin="anonymous"
               style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
             />
@@ -413,10 +402,10 @@ export function GallerySpread({ spread, isAdmin, full = false }: Props) {
           fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.25em",
           textTransform: "uppercase", zIndex: 30, textAlign: "center", padding: "0 24px",
         }}>
-          <div style={{ fontSize: "2.5rem", opacity: 0.3 }}>👕</div>
+          <div style={{ fontSize: "2.5rem", opacity: 0.3 }}>🖼️</div>
           No photos uploaded yet
           <span style={{ fontSize: "0.55rem", opacity: 0.6, letterSpacing: "0.2em" }}>
-            Upload jersey photos to color variants in the CMS
+            Open CMS → Gallery to upload photos for this spread
           </span>
         </div>
       )}
