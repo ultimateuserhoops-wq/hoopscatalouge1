@@ -687,6 +687,64 @@ function ActionBtn({ children, onClick, disabled }: { children: React.ReactNode;
   );
 }
 
+function AnimatedTitle({ text }: { text: string }) {
+  const words = (text || "").split(" ");
+  return (
+    <div
+      className="font-display mt-1"
+      style={{
+        fontSize: "3rem", letterSpacing: "0.03em", color: "var(--t-text)",
+        lineHeight: 1, display: "flex", flexWrap: "wrap", gap: "0.25em", overflow: "hidden",
+      }}
+    >
+      {words.map((word, i) => (
+        <span key={i} style={{ display: "inline-block", overflow: "hidden" }}>
+          <motion.span
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: "0%", opacity: 1 }}
+            transition={{ duration: 0.45, delay: 0.2 + i * 0.06, ease: [0.32, 0.72, 0, 1] }}
+            style={{ display: "inline-block" }}
+          >
+            {word}
+          </motion.span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function AnimatedPrice({ price }: { price: string }) {
+  const numMatch = price.match(/(\d+)/);
+  const target = numMatch ? parseInt(numMatch[1]) : 0;
+  const suffix = price.replace(/\d+/, "");
+  const [displayed, setDisplayed] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    let start: number | null = null;
+    const duration = 800;
+    function step(ts: number) {
+      if (start === null) start = ts;
+      const progress = Math.min((ts - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayed(Math.round(eased * target));
+      if (progress < 1) raf = requestAnimationFrame(step);
+    }
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
+  return (
+    <motion.span
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.35 }}
+      className="font-display text-4xl leading-none"
+      style={{ color: "var(--t-accent)" }}
+    >
+      {displayed}{suffix}
+    </motion.span>
+  );
+}
+
 function ColorCard({ color, isActive, onClick, canGenerate, hasPhoto, onGenerate, generating }: {
   color: ColorVariant; isActive: boolean; onClick: () => void;
   canGenerate: boolean; hasPhoto: boolean; onGenerate: () => void; generating: boolean;
