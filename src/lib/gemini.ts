@@ -165,6 +165,7 @@ async function callGeminiImages(imageDataUrls: string[], promptText: string, max
 export async function compositeOntoBackground(transparentDataUrl: string, bgColor: string): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image();
+    img.crossOrigin = "anonymous";
     img.onload = () => {
       const canvas = document.createElement("canvas");
       canvas.width = img.naturalWidth || 800;
@@ -182,7 +183,10 @@ export async function compositeOntoBackground(transparentDataUrl: string, bgColo
 
 export function getCurrentThemeBg(): string {
   if (typeof window === "undefined") return "#0a0a0a";
-  return getComputedStyle(document.documentElement).getPropertyValue("--t-bg").trim() || "#0a0a0a";
+  const styles = getComputedStyle(document.documentElement);
+  return styles.getPropertyValue("--t-display-bg").trim()
+    || styles.getPropertyValue("--t-bg").trim()
+    || "#0a0a0a";
 }
 
 export function getLeftPageBg(themeId?: string | null): string {
@@ -206,6 +210,19 @@ REQUIREMENTS:
 - Clean cutout with realistic edge softness around hair and fingers
 - Keep the ORIGINAL exposure, brightness, contrast, saturation, and white balance of the subject — do not lift midtones, do not boost vibrance, do not recover shadows, do not darken anything. The pixels of the subject should match the input.
 - Preserve every detail of the product (logos, numbers, stitching, fabric texture)`;
+
+export function buildRemoveBgToSolidPrompt(targetColor: string) {
+  return `Remove the background from this photo and replace it with this exact flat solid color: ${targetColor}
+
+CRITICAL OUTPUT RULES:
+- Output a normal opaque image with NO transparency.
+- The entire background must be ${targetColor}, edge to edge.
+- Do NOT render a checkerboard, chessboard, grid, pattern, transparency preview, grey boxes, or placeholder background.
+- Keep the person/product, clothing, logo, number, ball, pose, colors, exposure, and fabric details unchanged.
+- Clean realistic edges around hair, fingers, arms, legs, shoes, and product details.
+
+TARGET BACKGROUND COLOR (copy exactly): ${targetColor}`;
+}
 
 export function buildMatchBgPrompt(targetColor: string) {
   return `You are a professional product photo editor.
