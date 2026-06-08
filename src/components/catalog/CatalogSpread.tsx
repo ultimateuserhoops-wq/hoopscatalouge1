@@ -442,10 +442,30 @@ export function CatalogSpread(p: Props) {
               <Loader2 className="animate-spin" /> <div className="text-xs font-condensed tracking-widest">{aiBusy}</div>
             </div>
           )}
-        </div>
+
+          {/* Accent line — draws in from bottom */}
+          <motion.div
+            key={`accent-${product.id}`}
+            initial={{ scaleY: 0 }}
+            animate={{ scaleY: 1 }}
+            transition={{ duration: 0.6, delay: 0.1, ease: [0.32, 0.72, 0, 1] }}
+            style={{
+              position: "absolute", bottom: 0, left: 0,
+              width: 3, height: "40%", background: "var(--t-accent)",
+              transformOrigin: "bottom", zIndex: 25,
+            }}
+          />
+        </motion.div>
 
         {/* RIGHT PAGE */}
-        <div className="relative" style={{ background: "var(--t-bg)" }}>
+        <motion.div
+          key={`right-${product.id}`}
+          initial={{ x: 40, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.08, ease: [0.32, 0.72, 0, 1] }}
+          className="relative"
+          style={{ background: "var(--t-bg)" }}
+        >
           <div className="absolute top-0 inset-x-0 h-10 px-4 flex items-center justify-end"
             style={{ borderBottom: "1px solid var(--t-border)" }}>
             <div className="text-[0.6rem] tracking-widest font-condensed" style={{ color: "var(--t-subtext)" }}>
@@ -457,12 +477,12 @@ export function CatalogSpread(p: Props) {
             <div className="text-[0.62rem] tracking-[0.3em] font-condensed uppercase" style={{ color: "var(--t-accent)" }}>
               {product.category}
             </div>
-            <h1 className="font-display text-5xl leading-none mt-1" style={{ color: "var(--t-text)" }}>{product.name}</h1>
+            <AnimatedTitle key={`title-${product.id}`} text={product.name} />
             <div className="text-xs mt-1 font-condensed" style={{ color: "var(--t-subtext)" }}>{product.subtitle}</div>
 
             {/* Price row */}
             <div className="flex items-end gap-3 mt-4">
-              <div className="font-display text-4xl leading-none" style={{ color: "var(--t-accent)" }}>{product.price}</div>
+              <AnimatedPrice key={`price-${product.id}`} price={product.price || ""} />
               <div className="text-[0.62rem] font-condensed tracking-widest mb-1" style={{ color: "var(--t-subtext)" }}>VND</div>
               <div className="text-[0.7rem] line-through mb-1" style={{ color: "var(--t-subtext)" }}>{product.price_original}</div>
               {product.price_save_label && (
@@ -482,17 +502,25 @@ export function CatalogSpread(p: Props) {
               <span style={{ color: "var(--t-text)" }}>{activeColor?.name}</span>
             </div>
             <div className="mt-2 grid grid-cols-8 gap-1.5">
-              {colorVariants.map((c) => {
+              {colorVariants.map((c, i) => {
                 const hasSource = !!colorVariants.find((x) => x.jersey_photo && x.id !== c.id);
                 return (
-                  <ColorCard key={c.id} color={c}
-                    isActive={!customPreview && c.id === p.activeColorId}
-                    onClick={() => selectPreset(c.id)}
-                    canGenerate={!!p.isAdmin && hasSource}
-                    hasPhoto={!!c.jersey_photo}
-                    onGenerate={() => generateForCard(c)}
-                    generating={genId === c.id}
-                  />
+                  <motion.div
+                    key={c.id}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3, delay: 0.5 + i * 0.04, ease: [0.32, 0.72, 0, 1] }}
+                    style={{ position: "relative" }}
+                  >
+                    <ColorCard color={c}
+                      isActive={!customPreview && c.id === p.activeColorId}
+                      onClick={() => selectPreset(c.id)}
+                      canGenerate={!!p.isAdmin && hasSource}
+                      hasPhoto={!!c.jersey_photo}
+                      onGenerate={() => generateForCard(c)}
+                      generating={genId === c.id}
+                    />
+                  </motion.div>
                 );
               })}
               <CustomColorCard index={1} isGradient onApply={applyCustomColor} />
@@ -503,20 +531,30 @@ export function CatalogSpread(p: Props) {
 
             {/* Spec grid */}
             <div className="mt-4 grid grid-cols-2 gap-2">
-              {specRows.slice(0, 6).map((s) => (
-                <div key={s.id} className="px-2 py-1.5 rounded" style={{ background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
+              {specRows.slice(0, 6).map((s, i) => (
+                <motion.div key={s.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.4 + i * 0.07, ease: "easeOut" }}
+                  className="px-2 py-1.5 rounded" style={{ background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
                   <div className="text-[0.55rem] tracking-widest font-condensed uppercase" style={{ color: "var(--t-accent)" }}>{s.label}</div>
                   <div className="text-[0.78rem] font-condensed" style={{ color: "var(--t-text)" }}>{s.value}</div>
-                </div>
+                </motion.div>
               ))}
             </div>
 
             {/* CTA pinned bottom */}
             <div className="mt-auto flex items-center gap-2">
-              <button className="flex-1 py-2.5 font-condensed tracking-widest text-xs font-bold text-white clip-arrow-right"
+              <motion.button
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.65 }}
+                whileHover={{ scale: 1.02, boxShadow: `0 8px 28px ${hexToRgba(activeColor?.hex_main ?? "#FF4D00", 0.4)}` }}
+                whileTap={{ scale: 0.98 }}
+                className="flex-1 py-2.5 font-condensed tracking-widest text-xs font-bold text-white clip-arrow-right"
                 style={{ background: "var(--t-accent)" }}>
                 {product.cta_label}
-              </button>
+              </motion.button>
               <button className="w-9 h-9 rounded-full border flex items-center justify-center" style={{ borderColor: "var(--t-border)", color: "var(--t-text)" }}>
                 <Heart size={14} />
               </button>
@@ -528,7 +566,7 @@ export function CatalogSpread(p: Props) {
             {product.page_right}
           </div>
           <div className="absolute right-0 bottom-0" style={{ width: 0, height: 0, borderStyle: "solid", borderWidth: "0 0 22px 22px", borderColor: `transparent transparent var(--t-accent) transparent` }} />
-        </div>
+        </motion.div>
       </div>
 
       {p.isAdmin && (
