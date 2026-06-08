@@ -192,6 +192,50 @@ export type Database = {
           },
         ]
       }
+      gallery_photos: {
+        Row: {
+          created_at: string
+          hex_color: string
+          id: string
+          photo_url: string
+          sort_order: number
+          spread_id: string
+          subtitle: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hex_color?: string
+          id?: string
+          photo_url: string
+          sort_order?: number
+          spread_id: string
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hex_color?: string
+          id?: string
+          photo_url?: string
+          sort_order?: number
+          spread_id?: string
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_photos_spread_id_fkey"
+            columns: ["spread_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_spreads"
+            referencedColumns: ["spread_id"]
+          },
+        ]
+      }
       products: {
         Row: {
           badge_label: string | null
