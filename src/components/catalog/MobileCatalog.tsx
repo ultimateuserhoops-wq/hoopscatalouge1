@@ -697,14 +697,24 @@ function MobileProductView(pp: ProductProps) {
       )}
       {activeTab === "specs" && (
         <MobilePanel title="Specifications" onClose={() => setActiveTab(null)}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            {[...specRows].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((s) => (
-              <div key={s.id} style={{ background: "var(--t-bg)", border: "1px solid var(--t-border)", padding: 12 }}>
-                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.52rem", fontWeight: 700, letterSpacing: "0.2em", color: "var(--t-accent)", textTransform: "uppercase", marginBottom: 4 }}>{s.label}</div>
-                <div style={{ fontSize: "0.9rem", color: "var(--t-text)", fontWeight: 600 }}>{s.value}</div>
+          {(() => {
+            const findSpec = (re: RegExp) => specRows.find((s) => re.test(s.label || ""));
+            const fields = [
+              { label: "FABRIC", value: findSpec(/fabric/i)?.value || "—" },
+              { label: "MIN ORDER", value: findSpec(/min/i)?.value || "—" },
+              { label: "FEATURE", value: findSpec(/feature/i)?.value || "—" },
+            ];
+            return (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {fields.map((f) => (
+                  <div key={f.label} style={{ background: "var(--t-bg)", border: "1px solid var(--t-border)", padding: 12 }}>
+                    <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.52rem", fontWeight: 700, letterSpacing: "0.2em", color: "var(--t-accent)", textTransform: "uppercase", marginBottom: 4 }}>{f.label}</div>
+                    <div style={{ fontSize: "0.9rem", color: "var(--t-text)", fontWeight: 600, whiteSpace: "pre-wrap" }}>{f.value}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            );
+          })()}
         </MobilePanel>
       )}
       {activeTab === "order" && (
@@ -898,7 +908,7 @@ function MobilePanel({ title, onClose, children }: { title: string; onClose: () 
             width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
           }} aria-label="Close"><X size={14} /></button>
         </div>
-        <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>{children}</div>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", padding: 16 }}>{children}</div>
       </motion.div>
     </>
   );
