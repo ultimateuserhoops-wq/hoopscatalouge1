@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Settings, Sparkles, Scissors, Palette, Loader2, Shirt, User, Film, X, Info, ListChecks, ShoppingCart, Paintbrush, ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
 import { useSwipe } from "@/hooks/useSwipe";
 
