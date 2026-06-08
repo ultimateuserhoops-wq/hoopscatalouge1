@@ -6,7 +6,7 @@ import { useSwipe } from "@/hooks/useSwipe";
 import type { CatalogTheme, ColorVariant, DisplayMode, Product, SpecRow } from "@/lib/catalog-types";
 import { JerseySVG } from "./JerseySVG";
 import { ProductDisplayUpload } from "@/components/ProductDisplayUpload";
-import { hexToRgba, callGemini, BG_REMOVAL_PROMPT, getCurrentThemeBg, buildMatchBgPrompt, buildColorVariationPrompt, getAIErrorMessage, readFileAsDataURL, resizeImage } from "@/lib/gemini";
+import { hexToRgba, callGemini, BG_REMOVAL_PROMPT, getCurrentThemeBg, buildMatchBgPrompt, buildColorVariationPrompt, getAIErrorMessage, readFileAsDataURL, resizeImage, compositeOntoBackground } from "@/lib/gemini";
 import { notify } from "@/lib/toast";
 import { MENU_PAGES, type SpreadDef } from "@/lib/catalog-spreads";
 import { CMSPanel } from "./CMSPanel";
@@ -421,7 +421,8 @@ function MobileProductView(pp: ProductProps) {
     setAiBusy("Removing background…");
     try {
       const res = await callGemini(currentPhoto, BG_REMOVAL_PROMPT);
-      p.updateColorVariant(liveColor.id, { [FIELD_MAP[displayMode]]: res } as any);
+      const flat = await compositeOntoBackground(res, getCurrentThemeBg());
+      p.updateColorVariant(liveColor.id, { [FIELD_MAP[displayMode]]: flat } as any);
       notify("Background removed");
     } catch (e) { notify(getAIErrorMessage(e), true); }
     finally { setAiBusy(null); }
