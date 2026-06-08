@@ -690,6 +690,7 @@ function MobileProductView(pp: ProductProps) {
 
       {/* Panels */}
 
+      <AnimatePresence>
       {activeTab === "info" && (
         <MobilePanel title="Product Info" onClose={() => setActiveTab(null)}>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -758,6 +759,7 @@ function MobileProductView(pp: ProductProps) {
           </div>
         </MobilePanel>
       )}
+      </AnimatePresence>
     </div>
   );
 }
