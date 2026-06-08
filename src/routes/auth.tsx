@@ -16,7 +16,6 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -25,18 +24,9 @@ function AuthPage() {
     e.preventDefault();
     setBusy(true);
     try {
-      if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email, password,
-          options: { emailRedirectTo: window.location.origin },
-        });
-        if (error) throw error;
-        toast.success("Account created");
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        toast.success("Signed in");
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      toast.success("Signed in");
       navigate({ to: "/" });
     } catch (e: any) {
       toast.error(e.message || "Authentication failed");
@@ -62,7 +52,7 @@ function AuthPage() {
         <div className="text-center">
           <h1 className="font-display tracking-widest text-3xl text-white">HOOPS<span className="text-[#FF4D00]">.</span></h1>
           <p className="text-[0.6rem] font-condensed tracking-widest text-white/50 uppercase mt-1">
-            {mode === "signin" ? "Admin sign in" : "Create admin account"}
+            Admin sign in
           </p>
         </div>
         <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email"
@@ -71,7 +61,7 @@ function AuthPage() {
           className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white" />
         <button type="submit" disabled={busy}
           className="w-full py-2 rounded font-condensed tracking-widest text-xs font-bold text-white bg-[#FF4D00] hover:bg-[#e64500] disabled:opacity-50">
-          {busy ? "…" : mode === "signin" ? "SIGN IN" : "SIGN UP"}
+          {busy ? "…" : "SIGN IN"}
         </button>
 
         <div className="flex items-center gap-2 text-[0.55rem] font-condensed tracking-widest text-white/30 uppercase">
@@ -87,10 +77,6 @@ function AuthPage() {
             <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.6l6.2 5.2C40.8 35.4 44 30.1 44 24c0-1.2-.1-2.3-.4-3.5z"/>
           </svg>
           CONTINUE WITH GOOGLE
-        </button>
-        <button type="button" onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-          className="w-full text-[0.6rem] font-condensed tracking-widest text-white/50 hover:text-white">
-          {mode === "signin" ? "Need an account? Sign up" : "Already have one? Sign in"}
         </button>
         <a href="/" className="block text-center text-[0.55rem] font-condensed tracking-widest text-white/30 hover:text-white/60">← BACK TO CATALOG</a>
       </form>

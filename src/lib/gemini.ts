@@ -1,7 +1,6 @@
 // Gemini AI image tools — runs entirely in the browser.
 import { supabase } from "@/integrations/supabase/client";
 
-const KEY_LS = "hoops_gemini_key";
 const MODEL = "gemini-3.1-flash-image";
 
 declare global {
@@ -10,13 +9,12 @@ declare global {
 
 export function getGeminiKey(): string {
   if (typeof window === "undefined") return "";
-  return window.__geminiKey || localStorage.getItem(KEY_LS) || "";
+  return window.__geminiKey || "";
 }
 
 export function setGeminiKey(key: string) {
   if (typeof window !== "undefined") {
     window.__geminiKey = key;
-    localStorage.setItem(KEY_LS, key);
   }
 }
 

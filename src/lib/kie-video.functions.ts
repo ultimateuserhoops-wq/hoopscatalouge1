@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const KIE_BASE = "https://api.kie.ai/api/v1/veo";
 const KIE_CHAT = "https://api.kie.ai/claude/v1/messages";
@@ -43,6 +44,7 @@ function readTextContent(value: any): string {
 
 // 1) Build Veo prompt using Lovable AI from product + colorways
 export const generateVeoPrompt = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z
       .object({
@@ -118,6 +120,7 @@ Write the prompt now as one flowing paragraph.`;
 
 // 2) Start a Veo 3.1 job on KIE.AI
 export const startKieVideo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z
       .object({
@@ -152,6 +155,7 @@ export const startKieVideo = createServerFn({ method: "POST" })
 
 // 3) Poll a Veo job
 export const pollKieVideo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z.object({ taskId: z.string().min(1).max(200) }).parse(input)
   )
