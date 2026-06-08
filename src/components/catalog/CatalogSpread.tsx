@@ -220,7 +220,6 @@ export function CatalogSpread(p: Props) {
     }
   }
 
-  const haloColor = activeColor ? hexToRgba(activeColor.hex_main, 0.28) : "transparent";
   const leftPageBg = p.activeTheme?.display_bg || (p.activeThemeId === "white" ? "#f0ebe0" : "#ffffff");
   const isLightBg = (() => {
     const h = (leftPageBg || "#ffffff").replace("#", "");
@@ -252,11 +251,6 @@ export function CatalogSpread(p: Props) {
           className="relative grid-bg"
           style={{ background: leftPageBg }}
         >
-          {/* Court arcs */}
-          <div className="court-arc" style={{ width: 480, height: 240 }} />
-          <div className="court-arc" style={{ width: 260, height: 130 }} />
-          <div className="court-arc" style={{ width: 90, height: 45 }} />
-
           {/* Top bar — pinned top, 44px */}
           <div className="absolute left-0 right-0 px-4 flex items-center justify-between"
             style={{ top: 0, height: 44, background: leftPageBg, borderBottom: topBarBorder, zIndex: 20 }}>
@@ -305,14 +299,6 @@ export function CatalogSpread(p: Props) {
 
           {/* Product hero wrap — bounded between top bar (44px) and product label (72px) */}
           <div className="product-hero-wrap" style={{ position: "absolute", top: 44, left: 0, right: 0, height: 452, overflow: "hidden" }}>
-            {/* Glow halo */}
-            <motion.div
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-              animate={{ background: `radial-gradient(circle, ${haloColor}, transparent 70%)` }}
-              transition={{ duration: 0.6, ease: "easeInOut" }}
-              style={{ width: 300, height: 300 }}
-            />
-
             <motion.div
               className="product-view"
               animate={{ y: [0, -8, 0] }}

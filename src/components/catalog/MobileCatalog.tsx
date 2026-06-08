@@ -502,25 +502,6 @@ function MobileProductView(pp: ProductProps) {
 
       {/* Display area */}
       <div style={{ flex: 1, position: "relative", overflow: "hidden", touchAction: "pan-y" }} {...colorSwipe}>
-        {/* Glow */}
-        <motion.div
-          animate={{
-            background: `radial-gradient(ellipse at center, ${hexToRgba(liveColor?.hex_main ?? "#888", 0.28)} 0%, transparent 70%)`,
-          }}
-          transition={{ duration: 0.6, ease: "easeInOut" }}
-          style={{
-            position: "absolute", top: "50%", left: "45%", transform: "translate(-50%,-50%)",
-            width: "75%", height: "75%", borderRadius: "50%", pointerEvents: "none", zIndex: 1,
-          }}
-        />
-        {/* Court arc */}
-        <div style={{
-          position: "absolute", bottom: "-30%", left: "50%", transform: "translateX(-50%)",
-          width: "150%", height: "150%", borderRadius: "50%",
-          border: `1px solid ${hexToRgba(liveColor?.hex_main ?? "#888", 0.12)}`,
-          pointerEvents: "none", zIndex: 1,
-        }} />
-
         {/* Photo */}
         <motion.div
           className="product-view"
