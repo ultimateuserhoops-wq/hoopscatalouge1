@@ -6,7 +6,7 @@ import { useSwipe } from "@/hooks/useSwipe";
 import type { CatalogTheme, ColorVariant, DisplayMode, Product, SpecRow } from "@/lib/catalog-types";
 import { JerseySVG } from "./JerseySVG";
 import { ProductDisplayUpload } from "@/components/ProductDisplayUpload";
-import { hexToRgba, callGemini, BG_REMOVAL_PROMPT, getCurrentThemeBg, buildMatchBgPrompt, buildColorVariationPrompt, getAIErrorMessage, readFileAsDataURL, resizeImage, compositeOntoBackground } from "@/lib/gemini";
+import { hexToRgba, callGemini, getCurrentThemeBg, buildMatchBgPrompt, buildColorVariationPrompt, getAIErrorMessage, readFileAsDataURL, resizeImage, compositeOntoBackground, buildRemoveBgToSolidPrompt } from "@/lib/gemini";
 import { notify } from "@/lib/toast";
 import { MENU_PAGES, type SpreadDef } from "@/lib/catalog-spreads";
 import { CMSPanel } from "./CMSPanel";
@@ -420,8 +420,9 @@ function MobileProductView(pp: ProductProps) {
     if (!liveColor || !currentPhoto) return;
     setAiBusy("Removing background…");
     try {
-      const res = await callGemini(currentPhoto, BG_REMOVAL_PROMPT);
-      const flat = await compositeOntoBackground(res, getCurrentThemeBg());
+      const bg = getCurrentThemeBg();
+      const res = await callGemini(currentPhoto, buildRemoveBgToSolidPrompt(bg));
+      const flat = await compositeOntoBackground(res, bg);
       p.updateColorVariant(liveColor.id, { [FIELD_MAP[displayMode]]: flat } as any);
       notify("Background removed");
     } catch (e) { notify(getAIErrorMessage(e), true); }
@@ -538,7 +539,7 @@ function MobileProductView(pp: ProductProps) {
               style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
             >
               {photo ? (
-                <img loading="lazy" decoding="async" src={photo} alt={liveColor?.name} style={{ maxWidth: "85%", maxHeight: "90%", objectFit: "contain", mixBlendMode: "normal" }} />
+                <img loading="lazy" decoding="async" crossOrigin="anonymous" src={photo} alt={liveColor?.name} style={{ maxWidth: "85%", maxHeight: "90%", objectFit: "contain", mixBlendMode: "normal" }} />
               ) : displayMode === "jersey" && liveColor ? (
                 <div style={{ width: "65%", height: "65%" }}>
                   <JerseySVG hexMain={liveColor.hex_main} hexShade={liveColor.hex_shade || liveColor.hex_main} isLight={!!liveColor.is_light} category={product.category || undefined} />
