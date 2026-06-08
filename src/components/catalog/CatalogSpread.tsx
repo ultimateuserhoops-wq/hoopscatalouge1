@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Scissors, Palette, Heart, Loader2, Shirt, User, Film, Download, Video, Wand2 } from "lucide-react";
 import type { ColorVariant, DisplayMode, Product, SpecRow } from "@/lib/catalog-types";
 import { JerseySVG } from "./JerseySVG";
@@ -241,7 +242,14 @@ export function CatalogSpread(p: Props) {
     >
       <div className="absolute inset-0 grid grid-cols-2" style={{ borderRadius: 4, overflow: "hidden" }}>
         {/* LEFT PAGE */}
-        <div className="relative grid-bg" style={{ background: leftPageBg }}>
+        <motion.div
+          key={`left-${product.id}`}
+          initial={{ x: -40, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
+          className="relative grid-bg"
+          style={{ background: leftPageBg }}
+        >
           {/* Court arcs */}
           <div className="court-arc" style={{ width: 480, height: 240 }} />
           <div className="court-arc" style={{ width: 260, height: 130 }} />
@@ -260,10 +268,16 @@ export function CatalogSpread(p: Props) {
 
           {/* Corner badge */}
           {product.badge_label && (
-            <div className="absolute left-0 px-3 py-1 text-[0.55rem] font-bold font-condensed tracking-widest text-white clip-arrow-right"
-              style={{ top: 44, background: activeColor?.hex_main || "var(--t-accent)", zIndex: 15 }}>
+            <motion.div
+              key={`badge-${product.id}`}
+              initial={{ x: -60, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.15, type: "spring", stiffness: 280, damping: 22 }}
+              className="absolute left-0 px-3 py-1 text-[0.55rem] font-bold font-condensed tracking-widest text-white clip-arrow-right"
+              style={{ top: 44, background: activeColor?.hex_main || "var(--t-accent)", zIndex: 15 }}
+            >
               {product.badge_label}
-            </div>
+            </motion.div>
           )}
 
           {/* Display mode buttons */}
@@ -272,14 +286,17 @@ export function CatalogSpread(p: Props) {
               const Icon = m === "jersey" ? Shirt : m === "body" ? User : Film;
               const active = displayMode === m;
               return (
-                <button key={m} onClick={() => p.setDisplayMode(m)}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center transition ${active ? "text-white" : ""}`}
-                  style={{
+                <motion.button key={m} onClick={() => p.setDisplayMode(m)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.92 }}
+                  animate={{
                     background: active ? "var(--t-accent)" : "rgba(255,255,255,0.06)",
-                    color: active ? "white" : "var(--t-subtext)",
-                    border: "1px solid var(--t-border)",
+                    color: active ? "#ffffff" : "var(--t-subtext)",
                   }}
-                  title={m}><Icon size={14} /></button>
+                  transition={{ duration: 0.2 }}
+                  className="w-9 h-9 rounded-full flex items-center justify-center"
+                  style={{ border: "1px solid var(--t-border)" }}
+                  title={m}><Icon size={14} /></motion.button>
               );
             })}
           </div>
@@ -287,10 +304,28 @@ export function CatalogSpread(p: Props) {
           {/* Product hero wrap — bounded between top bar (44px) and product label (72px) */}
           <div className="product-hero-wrap" style={{ position: "absolute", top: 44, left: 0, right: 0, height: 452, overflow: "hidden" }}>
             {/* Glow halo */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ width: 300, height: 300, background: `radial-gradient(circle, ${haloColor}, transparent 70%)` }} />
+            <motion.div
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+              animate={{ background: `radial-gradient(circle, ${haloColor}, transparent 70%)` }}
+              transition={{ duration: 0.6, ease: "easeInOut" }}
+              style={{ width: 300, height: 300 }}
+            />
 
-            <div className="product-view" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+            <motion.div
+              className="product-view"
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", repeatType: "loop" }}
+              style={{ position: "absolute", inset: 0, overflow: "hidden" }}
+            >
+            <AnimatePresence mode="wait">
+            <motion.div
+              key={`media-${p.activeColorId}-${displayMode}`}
+              initial={{ opacity: 0, scale: 0.94, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: -8 }}
+              transition={{ duration: 0.28, ease: "easeOut" }}
+              style={{ position: "absolute", inset: 0 }}
+            >
               {displayMode === "jersey" && (
                 <div style={{ position: "absolute", inset: 0 }}>
                   <ProductDisplayUpload colorId={p.activeColorId} slotType="jersey" isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
@@ -335,7 +370,9 @@ export function CatalogSpread(p: Props) {
                   )}
                 </div>
               )}
-            </div>
+            </motion.div>
+            </AnimatePresence>
+            </motion.div>
 
             {/* AI action row — inside hero wrap, anchored bottom */}
             <div className="absolute left-1/2 -translate-x-1/2 flex gap-2 z-20" style={{ bottom: 8 }}>
@@ -405,10 +442,30 @@ export function CatalogSpread(p: Props) {
               <Loader2 className="animate-spin" /> <div className="text-xs font-condensed tracking-widest">{aiBusy}</div>
             </div>
           )}
-        </div>
+
+          {/* Accent line — draws in from bottom */}
+          <motion.div
+            key={`accent-${product.id}`}
+            initial={{ scaleY: 0 }}
+            animate={{ scaleY: 1 }}
+            transition={{ duration: 0.6, delay: 0.1, ease: [0.32, 0.72, 0, 1] }}
+            style={{
+              position: "absolute", bottom: 0, left: 0,
+              width: 3, height: "40%", background: "var(--t-accent)",
+              transformOrigin: "bottom", zIndex: 25,
+            }}
+          />
+        </motion.div>
 
         {/* RIGHT PAGE */}
-        <div className="relative" style={{ background: "var(--t-bg)" }}>
+        <motion.div
+          key={`right-${product.id}`}
+          initial={{ x: 40, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.08, ease: [0.32, 0.72, 0, 1] }}
+          className="relative"
+          style={{ background: "var(--t-bg)" }}
+        >
           <div className="absolute top-0 inset-x-0 h-10 px-4 flex items-center justify-end"
             style={{ borderBottom: "1px solid var(--t-border)" }}>
             <div className="text-[0.6rem] tracking-widest font-condensed" style={{ color: "var(--t-subtext)" }}>
@@ -420,12 +477,12 @@ export function CatalogSpread(p: Props) {
             <div className="text-[0.62rem] tracking-[0.3em] font-condensed uppercase" style={{ color: "var(--t-accent)" }}>
               {product.category}
             </div>
-            <h1 className="font-display text-5xl leading-none mt-1" style={{ color: "var(--t-text)" }}>{product.name}</h1>
+            <AnimatedTitle key={`title-${product.id}`} text={product.name} />
             <div className="text-xs mt-1 font-condensed" style={{ color: "var(--t-subtext)" }}>{product.subtitle}</div>
 
             {/* Price row */}
             <div className="flex items-end gap-3 mt-4">
-              <div className="font-display text-4xl leading-none" style={{ color: "var(--t-accent)" }}>{product.price}</div>
+              <AnimatedPrice key={`price-${product.id}`} price={product.price || ""} />
               <div className="text-[0.62rem] font-condensed tracking-widest mb-1" style={{ color: "var(--t-subtext)" }}>VND</div>
               <div className="text-[0.7rem] line-through mb-1" style={{ color: "var(--t-subtext)" }}>{product.price_original}</div>
               {product.price_save_label && (
@@ -445,17 +502,25 @@ export function CatalogSpread(p: Props) {
               <span style={{ color: "var(--t-text)" }}>{activeColor?.name}</span>
             </div>
             <div className="mt-2 grid grid-cols-8 gap-1.5">
-              {colorVariants.map((c) => {
+              {colorVariants.map((c, i) => {
                 const hasSource = !!colorVariants.find((x) => x.jersey_photo && x.id !== c.id);
                 return (
-                  <ColorCard key={c.id} color={c}
-                    isActive={!customPreview && c.id === p.activeColorId}
-                    onClick={() => selectPreset(c.id)}
-                    canGenerate={!!p.isAdmin && hasSource}
-                    hasPhoto={!!c.jersey_photo}
-                    onGenerate={() => generateForCard(c)}
-                    generating={genId === c.id}
-                  />
+                  <motion.div
+                    key={c.id}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3, delay: 0.5 + i * 0.04, ease: [0.32, 0.72, 0, 1] }}
+                    style={{ position: "relative" }}
+                  >
+                    <ColorCard color={c}
+                      isActive={!customPreview && c.id === p.activeColorId}
+                      onClick={() => selectPreset(c.id)}
+                      canGenerate={!!p.isAdmin && hasSource}
+                      hasPhoto={!!c.jersey_photo}
+                      onGenerate={() => generateForCard(c)}
+                      generating={genId === c.id}
+                    />
+                  </motion.div>
                 );
               })}
               <CustomColorCard index={1} isGradient onApply={applyCustomColor} />
@@ -466,20 +531,30 @@ export function CatalogSpread(p: Props) {
 
             {/* Spec grid */}
             <div className="mt-4 grid grid-cols-2 gap-2">
-              {specRows.slice(0, 6).map((s) => (
-                <div key={s.id} className="px-2 py-1.5 rounded" style={{ background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
+              {specRows.slice(0, 6).map((s, i) => (
+                <motion.div key={s.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.4 + i * 0.07, ease: "easeOut" }}
+                  className="px-2 py-1.5 rounded" style={{ background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
                   <div className="text-[0.55rem] tracking-widest font-condensed uppercase" style={{ color: "var(--t-accent)" }}>{s.label}</div>
                   <div className="text-[0.78rem] font-condensed" style={{ color: "var(--t-text)" }}>{s.value}</div>
-                </div>
+                </motion.div>
               ))}
             </div>
 
             {/* CTA pinned bottom */}
             <div className="mt-auto flex items-center gap-2">
-              <button className="flex-1 py-2.5 font-condensed tracking-widest text-xs font-bold text-white clip-arrow-right"
+              <motion.button
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.65 }}
+                whileHover={{ scale: 1.02, boxShadow: `0 8px 28px ${hexToRgba(activeColor?.hex_main ?? "#FF4D00", 0.4)}` }}
+                whileTap={{ scale: 0.98 }}
+                className="flex-1 py-2.5 font-condensed tracking-widest text-xs font-bold text-white clip-arrow-right"
                 style={{ background: "var(--t-accent)" }}>
                 {product.cta_label}
-              </button>
+              </motion.button>
               <button className="w-9 h-9 rounded-full border flex items-center justify-center" style={{ borderColor: "var(--t-border)", color: "var(--t-text)" }}>
                 <Heart size={14} />
               </button>
@@ -491,7 +566,7 @@ export function CatalogSpread(p: Props) {
             {product.page_right}
           </div>
           <div className="absolute right-0 bottom-0" style={{ width: 0, height: 0, borderStyle: "solid", borderWidth: "0 0 22px 22px", borderColor: `transparent transparent var(--t-accent) transparent` }} />
-        </div>
+        </motion.div>
       </div>
 
       {p.isAdmin && (
@@ -609,6 +684,64 @@ function ActionBtn({ children, onClick, disabled }: { children: React.ReactNode;
       style={{ background: "var(--t-accent)", color: "white" }}>
       {children}
     </button>
+  );
+}
+
+function AnimatedTitle({ text }: { text: string }) {
+  const words = (text || "").split(" ");
+  return (
+    <div
+      className="font-display mt-1"
+      style={{
+        fontSize: "3rem", letterSpacing: "0.03em", color: "var(--t-text)",
+        lineHeight: 1, display: "flex", flexWrap: "wrap", gap: "0.25em", overflow: "hidden",
+      }}
+    >
+      {words.map((word, i) => (
+        <span key={i} style={{ display: "inline-block", overflow: "hidden" }}>
+          <motion.span
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: "0%", opacity: 1 }}
+            transition={{ duration: 0.45, delay: 0.2 + i * 0.06, ease: [0.32, 0.72, 0, 1] }}
+            style={{ display: "inline-block" }}
+          >
+            {word}
+          </motion.span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function AnimatedPrice({ price }: { price: string }) {
+  const numMatch = price.match(/(\d+)/);
+  const target = numMatch ? parseInt(numMatch[1]) : 0;
+  const suffix = price.replace(/\d+/, "");
+  const [displayed, setDisplayed] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    let start: number | null = null;
+    const duration = 800;
+    function step(ts: number) {
+      if (start === null) start = ts;
+      const progress = Math.min((ts - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayed(Math.round(eased * target));
+      if (progress < 1) raf = requestAnimationFrame(step);
+    }
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
+  return (
+    <motion.span
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.35 }}
+      className="font-display text-4xl leading-none"
+      style={{ color: "var(--t-accent)" }}
+    >
+      {displayed}{suffix}
+    </motion.span>
   );
 }
 
