@@ -246,6 +246,10 @@ function CatalogPage() {
           deleteSpread={deleteSpread}
           onSpreadChange={(i) => setSpreadIndex(i)}
           currentSpread={currentSpread}
+          productTiers={cat.productTiers}
+          updateTier={cat.updateTier}
+          addTier={cat.addTier}
+          deleteTier={cat.deleteTier}
         />
       )}
     </main>
