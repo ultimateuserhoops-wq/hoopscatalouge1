@@ -501,11 +501,16 @@ function MobileProductView(pp: ProductProps) {
       {/* Display area */}
       <div style={{ flex: 1, position: "relative", overflow: "hidden", touchAction: "pan-y" }} {...colorSwipe}>
         {/* Glow */}
-        <div style={{
-          position: "absolute", top: "50%", left: "45%", transform: "translate(-50%,-50%)",
-          width: "75%", height: "75%", borderRadius: "50%", pointerEvents: "none", zIndex: 1,
-          background: `radial-gradient(ellipse at center, ${hexToRgba(liveColor?.hex_main ?? "#888", 0.28)} 0%, transparent 70%)`,
-        }} />
+        <motion.div
+          animate={{
+            background: `radial-gradient(ellipse at center, ${hexToRgba(liveColor?.hex_main ?? "#888", 0.28)} 0%, transparent 70%)`,
+          }}
+          transition={{ duration: 0.6, ease: "easeInOut" }}
+          style={{
+            position: "absolute", top: "50%", left: "45%", transform: "translate(-50%,-50%)",
+            width: "75%", height: "75%", borderRadius: "50%", pointerEvents: "none", zIndex: 1,
+          }}
+        />
         {/* Court arc */}
         <div style={{
           position: "absolute", bottom: "-30%", left: "50%", transform: "translateX(-50%)",
@@ -515,9 +520,22 @@ function MobileProductView(pp: ProductProps) {
         }} />
 
         {/* Photo */}
-        <div className="product-view" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>
+        <motion.div
+          className="product-view"
+          animate={{ y: [0, -6, 0] }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", repeatType: "loop" }}
+          style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}
+        >
           <ProductDisplayUpload colorId={liveColor?.id ?? null} slotType={displayMode} isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
-            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <AnimatePresence mode="wait">
+            <motion.div
+              key={`mobile-media-${liveColor?.id}-${displayMode}`}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+            >
               {photo ? (
                 <img loading="lazy" decoding="async" src={photo} alt={liveColor?.name} style={{ maxWidth: "85%", maxHeight: "90%", objectFit: "contain", mixBlendMode: "normal" }} />
               ) : displayMode === "jersey" && liveColor ? (
@@ -532,9 +550,10 @@ function MobileProductView(pp: ProductProps) {
                   </div>
                 </div>
               )}
-            </div>
+            </motion.div>
+            </AnimatePresence>
           </ProductDisplayUpload>
-        </div>
+        </motion.div>
 
         {/* Display mode buttons */}
         <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: 8, zIndex: 10 }}>
@@ -545,14 +564,22 @@ function MobileProductView(pp: ProductProps) {
           ] as const).map(({ k, I }) => {
             const active = displayMode === k;
             return (
-              <button key={k} onClick={() => p.setDisplayMode(k)} style={{
-                width: 36, height: 36, borderRadius: "50%",
-                background: active ? "var(--t-accent)" : "rgba(0,0,0,0.45)",
-                border: `1px solid ${active ? "var(--t-accent)" : "rgba(255,255,255,0.15)"}`,
-                color: active ? "#000" : "rgba(255,255,255,0.7)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                backdropFilter: "blur(6px)",
-              }} aria-label={k}><I size={15} /></button>
+              <motion.button
+                key={k}
+                onClick={() => p.setDisplayMode(k)}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.92 }}
+                animate={{
+                  background: active ? "var(--t-accent)" : "rgba(0,0,0,0.45)",
+                  color: active ? "#000000" : "rgba(255,255,255,0.7)",
+                }}
+                transition={{ duration: 0.2 }}
+                style={{
+                  width: 36, height: 36, borderRadius: "50%",
+                  border: `1px solid ${active ? "var(--t-accent)" : "rgba(255,255,255,0.15)"}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  backdropFilter: "blur(6px)",
+                }} aria-label={k}><I size={15} /></motion.button>
             );
           })}
         </div>
