@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
-import { callGemini, callGeminiTwoImages, readFileAsDataURL, resizeImage, BG_REMOVAL_PROMPT, compositeOntoBackground, getCurrentThemeBg, getAIErrorMessage, buildColorVariationPrompt, buildOnBodyMatchPrompt, downloadImageHD } from "@/lib/gemini";
+import { callGemini, callGeminiTwoImages, readFileAsDataURL, resizeImage, compositeOntoBackground, getCurrentThemeBg, getAIErrorMessage, buildColorVariationPrompt, buildOnBodyMatchPrompt, downloadImageHD, buildRemoveBgToSolidPrompt } from "@/lib/gemini";
 import { notify } from "@/lib/toast";
 import type { ColorVariant } from "@/lib/catalog-types";
 
@@ -39,8 +39,10 @@ export function UploadSlot({ color, slot, icon, label, accept, allowRecolor, sou
     if (!photo) return;
     setBusy("Removing BG...");
     try {
-      const transparent = await callGemini(photo, BG_REMOVAL_PROMPT);
-      onUpdate(color.id, { [photoField]: transparent } as any);
+      const bg = getCurrentThemeBg();
+      const result = await callGemini(photo, buildRemoveBgToSolidPrompt(bg));
+      const flat = await compositeOntoBackground(result, bg);
+      onUpdate(color.id, { [photoField]: flat } as any);
       notify("Background removed");
     } catch (e) {
       notify(getAIErrorMessage(e), true);
@@ -103,7 +105,7 @@ export function UploadSlot({ color, slot, icon, label, accept, allowRecolor, sou
       )}
       {photo && (
         <>
-          <img loading="lazy" decoding="async" src={photo} alt={label} className="w-full h-[68px] object-cover" />
+          <img loading="lazy" decoding="async" crossOrigin="anonymous" src={photo} alt={label} className="w-full h-[68px] object-cover" />
           <button
             onClick={() => downloadImageHD(photo, `${color.name.replace(/\s+/g, "-").toLowerCase()}-${slot}.${slot === "motion" ? "gif" : "png"}`, 2400)}
             className="absolute top-1 right-6 w-4 h-4 rounded-full bg-black/70 border border-white/20 text-white text-[10px] flex items-center justify-center hover:bg-black"
