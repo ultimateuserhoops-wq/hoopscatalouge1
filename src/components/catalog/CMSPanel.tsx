@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { X, Plus, Trash2, Sparkles, LogOut, Check, Upload, Wand2, Download, FileText } from "lucide-react";
-import type { CatalogTheme, ColorVariant, Product, SpecRow, TemplateSet } from "@/lib/catalog-types";
+import type { CatalogTheme, ColorVariant, Product, ProductTier, SpecRow, TemplateSet } from "@/lib/catalog-types";
 import type { SpreadDef } from "@/lib/catalog-spreads";
 import { UploadSlot } from "./UploadSlot";
 import { GalleryEditor } from "./GalleryEditor";
@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTemplateSet } from "@/hooks/useTemplateSet";
 import { useNavigate } from "@tanstack/react-router";
 
-type Tab = "theme" | "pages" | "info" | "colors" | "specs" | "page" | "gallery";
+type Tab = "theme" | "pages" | "info" | "colors" | "specs" | "page" | "gallery" | "tiers";
 
 interface Props {
   open: boolean;
@@ -34,6 +34,10 @@ interface Props {
   deleteSpread: (spread_id: string) => Promise<void>;
   onSpreadChange?: (index: number) => void;
   currentSpread?: SpreadDef | null;
+  productTiers?: ProductTier[];
+  updateTier?: (id: string, p: Partial<ProductTier>) => void;
+  addTier?: () => void;
+  deleteTier?: (id: string) => void;
 }
 
 export function CMSPanel(p: Props) {
