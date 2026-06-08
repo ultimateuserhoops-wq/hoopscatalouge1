@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Scissors, Palette, Heart, Loader2, Shirt, User, Film, Download, Video, Wand2 } from "lucide-react";
-import type { ColorVariant, DisplayMode, Product, SpecRow } from "@/lib/catalog-types";
+import type { ColorVariant, DisplayMode, Product, ProductTier, SpecRow } from "@/lib/catalog-types";
 import { JerseySVG } from "./JerseySVG";
 import { hexToRgba, callGemini, getLeftPageBg, buildMatchBgPrompt, buildColorVariationPrompt, getAIErrorMessage, readFileAsDataURL, resizeImage, downloadImageHD, compositeOntoBackground, buildRemoveBgToSolidPrompt } from "@/lib/gemini";
 import { notify } from "@/lib/toast";
@@ -23,6 +23,9 @@ interface Props {
   activeThemeId?: string;
   activeTheme?: { display_bg?: string; theme_id?: string } | null;
   updateProduct?: (patch: Partial<Product>) => void;
+  productTiers?: ProductTier[];
+  activeTierKey?: string | null;
+  setActiveTierKey?: (k: string) => void;
 }
 
 
