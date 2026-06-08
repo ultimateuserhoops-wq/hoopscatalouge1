@@ -782,7 +782,12 @@ function MobileColorCard({ color, isActive, onClick, canGenerate, hasPhoto, onGe
   canGenerate: boolean; hasPhoto: boolean; onGenerate: () => void; generating: boolean;
 }) {
   return (
-    <div style={{ position: "relative", overflow: "visible", flexShrink: 0, width: 46, height: 46 }} onClick={onClick}>
+    <motion.div
+      onClick={onClick}
+      animate={{ scale: isActive ? 1.08 : 1 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      style={{ position: "relative", overflow: "visible", flexShrink: 0, width: 46, height: 46 }}
+    >
       <div style={{
         position: "absolute", inset: 0, overflow: "hidden", borderRadius: 4,
         border: isActive ? "2px solid var(--t-accent)" : "1px solid var(--t-border)",
@@ -812,7 +817,7 @@ function MobileColorCard({ color, isActive, onClick, canGenerate, hasPhoto, onGe
           <Loader2 size={14} className="animate-spin" color="#fff" />
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -878,13 +883,25 @@ function MobileCustomColor({ index, isGradient, onApply }: { index: number; isGr
 function MobilePanel({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 50, animation: "fadeIn 0.2s ease" }} />
-      <div style={{
-        position: "fixed", bottom: 0, left: 0, right: 0, height: "80dvh",
-        background: "var(--t-surface)", borderRadius: "16px 16px 0 0", borderTop: "2px solid var(--t-accent)",
-        zIndex: 51, display: "flex", flexDirection: "column",
-        animation: "slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1)", overflow: "hidden",
-      }}>
+      <motion.div
+        onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 50 }}
+      />
+      <motion.div
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", stiffness: 380, damping: 38, mass: 1 }}
+        style={{
+          position: "fixed", bottom: 0, left: 0, right: 0, height: "80dvh",
+          background: "var(--t-surface)", borderRadius: "16px 16px 0 0", borderTop: "2px solid var(--t-accent)",
+          zIndex: 51, display: "flex", flexDirection: "column", overflow: "hidden",
+        }}
+      >
         <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px 10px", borderBottom: "1px solid var(--t-border)", flexShrink: 0 }}>
           <div style={{ position: "absolute", top: 6, left: "50%", transform: "translateX(-50%)", width: 32, height: 3, borderRadius: 2, background: "var(--t-border)" }} />
           <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.25em", color: "var(--t-text)", textTransform: "uppercase" }}>{title}</div>
@@ -894,7 +911,7 @@ function MobilePanel({ title, onClose, children }: { title: string; onClose: () 
           }} aria-label="Close"><X size={14} /></button>
         </div>
         <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>{children}</div>
-      </div>
+      </motion.div>
     </>
   );
 }
