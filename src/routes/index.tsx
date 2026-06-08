@@ -139,6 +139,9 @@ function CatalogPage() {
             isAdmin={isAuthed}
             activeThemeId={cat.themes?.find((t) => t.is_active)?.theme_id}
             activeTheme={cat.themes?.find((t) => t.is_active) || null}
+            productTiers={cat.productTiers}
+            activeTierKey={cat.activeTierKey}
+            setActiveTierKey={cat.setActiveTierKey}
           />
         );
     }
