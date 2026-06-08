@@ -114,9 +114,9 @@ export function GallerySpread({ spread, isAdmin, full = false }: Props) {
       const url = (await uploadDataUrlToStorage(composited, "colors/jersey_photo")) || composited;
       await supabase.from("color_variants").update({ jersey_photo: url }).eq("id", activeItem.id);
       setItems((prev) => prev.map((it, i) => (i === activeIndex ? { ...it, photo: url } : it)));
-      notify.success("Background removed");
+      notify("✓ Background removed");
     } catch (err) {
-      notify.error(getAIErrorMessage(err));
+      notify(getAIErrorMessage(err), true);
     } finally {
       setRemovingBg(false);
     }
