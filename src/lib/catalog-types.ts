@@ -60,6 +60,17 @@ export interface CatalogTheme {
 
 export type DisplayMode = "jersey" | "body" | "motion";
 
+export interface ProductTier {
+  id: string;
+  product_id: string;
+  tier_key: string; // "standard" | "premium" | "elite" (free-form)
+  label: string;
+  price: string | null;
+  fabric: string | null;
+  feature: string | null;
+  sort_order: number;
+}
+
 export interface TemplateSet {
   id: string;
   product_id: string | null;

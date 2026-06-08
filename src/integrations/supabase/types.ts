@@ -236,6 +236,53 @@ export type Database = {
           },
         ]
       }
+      product_tiers: {
+        Row: {
+          created_at: string
+          fabric: string | null
+          feature: string | null
+          id: string
+          label: string
+          price: string | null
+          product_id: string
+          sort_order: number
+          tier_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fabric?: string | null
+          feature?: string | null
+          id?: string
+          label: string
+          price?: string | null
+          product_id: string
+          sort_order?: number
+          tier_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fabric?: string | null
+          feature?: string | null
+          id?: string
+          label?: string
+          price?: string | null
+          product_id?: string
+          sort_order?: number
+          tier_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_tiers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           badge_label: string | null

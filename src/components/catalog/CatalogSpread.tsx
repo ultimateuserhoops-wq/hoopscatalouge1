@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Scissors, Palette, Heart, Loader2, Shirt, User, Film, Download, Video, Wand2 } from "lucide-react";
-import type { ColorVariant, DisplayMode, Product, SpecRow } from "@/lib/catalog-types";
+import type { ColorVariant, DisplayMode, Product, ProductTier, SpecRow } from "@/lib/catalog-types";
 import { JerseySVG } from "./JerseySVG";
 import { hexToRgba, callGemini, getLeftPageBg, buildMatchBgPrompt, buildColorVariationPrompt, getAIErrorMessage, readFileAsDataURL, resizeImage, downloadImageHD, compositeOntoBackground, buildRemoveBgToSolidPrompt } from "@/lib/gemini";
 import { notify } from "@/lib/toast";
@@ -23,6 +23,9 @@ interface Props {
   activeThemeId?: string;
   activeTheme?: { display_bg?: string; theme_id?: string } | null;
   updateProduct?: (patch: Partial<Product>) => void;
+  productTiers?: ProductTier[];
+  activeTierKey?: string | null;
+  setActiveTierKey?: (k: string) => void;
 }
 
 
@@ -468,21 +471,65 @@ export function CatalogSpread(p: Props) {
             <AnimatedTitle key={`title-${product.id}`} text={product.name} />
             <div className="text-xs mt-1 font-condensed" style={{ color: "var(--t-subtext)" }}>{product.subtitle}</div>
 
-            {/* Price row */}
-            <div className="flex items-end gap-3 mt-4">
-              <AnimatedPrice key={`price-${product.id}`} price={product.price || ""} />
-              <div className="text-[0.62rem] font-condensed tracking-widest mb-1" style={{ color: "var(--t-subtext)" }}>VND</div>
-              <div className="text-[0.7rem] line-through mb-1" style={{ color: "var(--t-subtext)" }}>{product.price_original}</div>
-              {product.price_save_label && (
-                <div className="text-[0.55rem] font-bold font-condensed tracking-widest px-1.5 py-0.5 mb-1 rounded bg-emerald-600 text-white">
-                  {product.price_save_label}
-                </div>
-              )}
-            </div>
-
-            <p className="text-[0.78rem] italic mt-3 line-clamp-2" style={{ color: "var(--t-subtext)" }}>
-              {product.description}
-            </p>
+            {(() => {
+              const isJersey = (product.category || "").toUpperCase() === "JERSEYS";
+              const tiers = p.productTiers || [];
+              if (isJersey && tiers.length > 0) {
+                const activeKey = p.activeTierKey || tiers[0].tier_key;
+                return (
+                  <>
+                    <div className="mt-3 flex flex-col gap-1">
+                      <div className="text-[0.55rem] font-condensed tracking-[0.3em] uppercase mb-0.5" style={{ color: "var(--t-subtext)" }}>
+                        Product Range
+                      </div>
+                      {tiers.map((t) => {
+                        const active = t.tier_key === activeKey;
+                        return (
+                          <button
+                            key={t.id}
+                            onClick={() => p.setActiveTierKey?.(t.tier_key)}
+                            className="flex items-baseline justify-between gap-3 py-1.5 px-2 rounded text-left transition-colors"
+                            style={{
+                              background: active ? "var(--t-surface)" : "transparent",
+                              border: active ? "1px solid var(--t-accent)" : "1px solid var(--t-border)",
+                            }}
+                          >
+                            <span className="font-condensed tracking-widest text-[0.7rem] uppercase" style={{ color: active ? "var(--t-accent)" : "var(--t-text)" }}>
+                              {t.label}
+                            </span>
+                            <span className="font-display text-base" style={{ color: active ? "var(--t-accent)" : "var(--t-text)" }}>
+                              {t.price || "—"}
+                              <span className="ml-1 text-[0.55rem] font-condensed tracking-widest" style={{ color: "var(--t-subtext)" }}>VND</span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[0.75rem] italic mt-3 line-clamp-2" style={{ color: "var(--t-subtext)" }}>
+                      {product.description}
+                    </p>
+                  </>
+                );
+              }
+              return (
+                <>
+                  {/* Price row */}
+                  <div className="flex items-end gap-3 mt-4">
+                    <AnimatedPrice key={`price-${product.id}`} price={product.price || ""} />
+                    <div className="text-[0.62rem] font-condensed tracking-widest mb-1" style={{ color: "var(--t-subtext)" }}>VND</div>
+                    <div className="text-[0.7rem] line-through mb-1" style={{ color: "var(--t-subtext)" }}>{product.price_original}</div>
+                    {product.price_save_label && (
+                      <div className="text-[0.55rem] font-bold font-condensed tracking-widest px-1.5 py-0.5 mb-1 rounded bg-emerald-600 text-white">
+                        {product.price_save_label}
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[0.78rem] italic mt-3 line-clamp-2" style={{ color: "var(--t-subtext)" }}>
+                    {product.description}
+                  </p>
+                </>
+              );
+            })()}
 
             {/* Color section */}
             <div className="mt-4 flex items-center justify-between text-[0.6rem] font-condensed tracking-widest uppercase">
@@ -517,19 +564,46 @@ export function CatalogSpread(p: Props) {
               <CustomColorCard index={4} isGradient={false} onApply={applyCustomColor} />
             </div>
 
-            {/* Spec grid */}
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {specRows.slice(0, 6).map((s, i) => (
-                <motion.div key={s.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.4 + i * 0.07, ease: "easeOut" }}
-                  className="px-2 py-1.5 rounded" style={{ background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
-                  <div className="text-[0.55rem] tracking-widest font-condensed uppercase" style={{ color: "var(--t-accent)" }}>{s.label}</div>
-                  <div className="text-[0.78rem] font-condensed" style={{ color: "var(--t-text)" }}>{s.value}</div>
-                </motion.div>
-              ))}
-            </div>
+            {(() => {
+              const isJersey = (product.category || "").toUpperCase() === "JERSEYS";
+              const tiers = p.productTiers || [];
+              if (isJersey && tiers.length > 0) {
+                const activeKey = p.activeTierKey || tiers[0].tier_key;
+                const tier = tiers.find((t) => t.tier_key === activeKey) || tiers[0];
+                const cells = [
+                  { label: "Fabric", value: tier.fabric || "—" },
+                  { label: "Feature", value: tier.feature || "—" },
+                ];
+                return (
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    {cells.map((c, i) => (
+                      <motion.div key={`${tier.id}-${c.label}`}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: i * 0.06, ease: "easeOut" }}
+                        className="px-2 py-1.5 rounded" style={{ background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
+                        <div className="text-[0.55rem] tracking-widest font-condensed uppercase" style={{ color: "var(--t-accent)" }}>{c.label}</div>
+                        <div className="text-[0.78rem] font-condensed" style={{ color: "var(--t-text)" }}>{c.value}</div>
+                      </motion.div>
+                    ))}
+                  </div>
+                );
+              }
+              return (
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  {specRows.slice(0, 6).map((s, i) => (
+                    <motion.div key={s.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: 0.4 + i * 0.07, ease: "easeOut" }}
+                      className="px-2 py-1.5 rounded" style={{ background: "var(--t-surface)", border: "1px solid var(--t-border)" }}>
+                      <div className="text-[0.55rem] tracking-widest font-condensed uppercase" style={{ color: "var(--t-accent)" }}>{s.label}</div>
+                      <div className="text-[0.78rem] font-condensed" style={{ color: "var(--t-text)" }}>{s.value}</div>
+                    </motion.div>
+                  ))}
+                </div>
+              );
+            })()}
 
             {/* CTA pinned bottom */}
             <div className="mt-auto flex items-center gap-2">

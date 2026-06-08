@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { X, Plus, Trash2, Sparkles, LogOut, Check, Upload, Wand2, Download, FileText } from "lucide-react";
-import type { CatalogTheme, ColorVariant, Product, SpecRow, TemplateSet } from "@/lib/catalog-types";
+import type { CatalogTheme, ColorVariant, Product, ProductTier, SpecRow, TemplateSet } from "@/lib/catalog-types";
 import type { SpreadDef } from "@/lib/catalog-spreads";
 import { UploadSlot } from "./UploadSlot";
 import { GalleryEditor } from "./GalleryEditor";
@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTemplateSet } from "@/hooks/useTemplateSet";
 import { useNavigate } from "@tanstack/react-router";
 
-type Tab = "theme" | "pages" | "info" | "colors" | "specs" | "page" | "gallery";
+type Tab = "theme" | "pages" | "info" | "colors" | "specs" | "page" | "gallery" | "tiers";
 
 interface Props {
   open: boolean;
@@ -34,6 +34,10 @@ interface Props {
   deleteSpread: (spread_id: string) => Promise<void>;
   onSpreadChange?: (index: number) => void;
   currentSpread?: SpreadDef | null;
+  productTiers?: ProductTier[];
+  updateTier?: (id: string, p: Partial<ProductTier>) => void;
+  addTier?: () => void;
+  deleteTier?: (id: string) => void;
 }
 
 export function CMSPanel(p: Props) {
@@ -44,6 +48,7 @@ export function CMSPanel(p: Props) {
   useEffect(() => { if (p.open) loadGeminiKeyFromDb().then((k) => setKeyInput(k || "")); }, [p.open]);
 
   const isGallery = p.currentSpread?.type === "gallery";
+  const isJersey = (p.product?.category || "").toUpperCase() === "JERSEYS";
   useEffect(() => {
     if (p.open && isGallery) setTab("gallery");
   }, [p.open, isGallery, p.currentSpread?.id]);
@@ -72,9 +77,11 @@ export function CMSPanel(p: Props) {
       <div className="flex border-b border-white/10 text-[0.6rem] font-condensed tracking-widest">
         {((isGallery
           ? ["theme","pages","gallery"]
-          : ["theme","pages","info","colors","specs","page"]) as Tab[]).map((t) => (
+          : isJersey
+            ? ["theme","pages","info","colors","tiers","specs","page"]
+            : ["theme","pages","info","colors","specs","page"]) as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`flex-1 py-2.5 uppercase ${tab===t?"bg-white/10 text-white":"text-white/50 hover:text-white"}`}>
+            className={`flex-1 py-2 px-1 uppercase ${tab===t?"bg-white/10 text-white":"text-white/50 hover:text-white"}`}>
             {t}
           </button>
         ))}
@@ -106,6 +113,9 @@ export function CMSPanel(p: Props) {
         {tab === "colors" && !p.product && <EmptyProductHint />}
 
         {tab === "specs" && <SpecsTab specRows={p.specRows} addSpec={p.addSpec} updateSpec={p.updateSpec} deleteSpec={p.deleteSpec} />}
+        {tab === "tiers" && (p.product
+          ? <TiersTab tiers={p.productTiers || []} updateTier={p.updateTier!} addTier={p.addTier!} deleteTier={p.deleteTier!} />
+          : <EmptyProductHint />)}
         {tab === "page" && (p.product
           ? <PageTab product={p.product} updateProduct={p.updateProduct} />
           : <EmptyProductHint />)}
@@ -522,6 +532,38 @@ function PageTab({ product, updateProduct }: { product: Product; updateProduct: 
       </div>
       <Field label="Collection label" value={product.collection_label || ""} onChange={(v) => updateProduct({ collection_label: v })} />
       <Field label="CTA button text" value={product.cta_label || ""} onChange={(v) => updateProduct({ cta_label: v })} />
+    </div>
+  );
+}
+
+function TiersTab({ tiers, updateTier, addTier, deleteTier }: {
+  tiers: ProductTier[];
+  updateTier: (id: string, p: Partial<ProductTier>) => void;
+  addTier: () => void;
+  deleteTier: (id: string) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="text-[0.55rem] font-condensed tracking-widest text-white/60 uppercase">
+        Product Range Tiers (Jerseys)
+      </div>
+      {tiers.map((t) => (
+        <div key={t.id} className="border border-white/10 rounded p-2 space-y-2 bg-white/5">
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="Label" value={t.label} onChange={(v) => updateTier(t.id, { label: v })} />
+            <Field label="Price" value={t.price || ""} onChange={(v) => updateTier(t.id, { price: v })} />
+          </div>
+          <Field label="Fabric" value={t.fabric || ""} onChange={(v) => updateTier(t.id, { fabric: v })} />
+          <Field label="Feature" value={t.feature || ""} onChange={(v) => updateTier(t.id, { feature: v })} />
+          <button onClick={() => deleteTier(t.id)}
+            className="text-[0.55rem] font-condensed tracking-widest text-red-400 hover:text-red-300 flex items-center gap-1">
+            <Trash2 size={11} /> DELETE TIER
+          </button>
+        </div>
+      ))}
+      <button onClick={addTier} className="w-full py-2 border border-dashed border-white/20 rounded text-[0.6rem] font-condensed tracking-widest hover:bg-white/5 flex items-center justify-center gap-1">
+        <Plus size={12} /> ADD TIER
+      </button>
     </div>
   );
 }
