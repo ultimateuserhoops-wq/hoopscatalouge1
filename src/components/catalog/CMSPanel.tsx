@@ -536,6 +536,38 @@ function PageTab({ product, updateProduct }: { product: Product; updateProduct: 
   );
 }
 
+function TiersTab({ tiers, updateTier, addTier, deleteTier }: {
+  tiers: ProductTier[];
+  updateTier: (id: string, p: Partial<ProductTier>) => void;
+  addTier: () => void;
+  deleteTier: (id: string) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="text-[0.55rem] font-condensed tracking-widest text-white/60 uppercase">
+        Product Range Tiers (Jerseys)
+      </div>
+      {tiers.map((t) => (
+        <div key={t.id} className="border border-white/10 rounded p-2 space-y-2 bg-white/5">
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="Label" value={t.label} onChange={(v) => updateTier(t.id, { label: v })} />
+            <Field label="Price" value={t.price || ""} onChange={(v) => updateTier(t.id, { price: v })} />
+          </div>
+          <Field label="Fabric" value={t.fabric || ""} onChange={(v) => updateTier(t.id, { fabric: v })} />
+          <Field label="Feature" value={t.feature || ""} onChange={(v) => updateTier(t.id, { feature: v })} />
+          <button onClick={() => deleteTier(t.id)}
+            className="text-[0.55rem] font-condensed tracking-widest text-red-400 hover:text-red-300 flex items-center gap-1">
+            <Trash2 size={11} /> DELETE TIER
+          </button>
+        </div>
+      ))}
+      <button onClick={addTier} className="w-full py-2 border border-dashed border-white/20 rounded text-[0.6rem] font-condensed tracking-widest hover:bg-white/5 flex items-center justify-center gap-1">
+        <Plus size={12} /> ADD TIER
+      </button>
+    </div>
+  );
+}
+
 function TemplateSetSection({
   templateSet,
   updateTemplate,
