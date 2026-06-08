@@ -48,6 +48,7 @@ export function CMSPanel(p: Props) {
   useEffect(() => { if (p.open) loadGeminiKeyFromDb().then((k) => setKeyInput(k || "")); }, [p.open]);
 
   const isGallery = p.currentSpread?.type === "gallery";
+  const isJersey = (p.product?.category || "").toUpperCase() === "JERSEYS";
   useEffect(() => {
     if (p.open && isGallery) setTab("gallery");
   }, [p.open, isGallery, p.currentSpread?.id]);
@@ -76,9 +77,11 @@ export function CMSPanel(p: Props) {
       <div className="flex border-b border-white/10 text-[0.6rem] font-condensed tracking-widest">
         {((isGallery
           ? ["theme","pages","gallery"]
-          : ["theme","pages","info","colors","specs","page"]) as Tab[]).map((t) => (
+          : isJersey
+            ? ["theme","pages","info","colors","tiers","specs","page"]
+            : ["theme","pages","info","colors","specs","page"]) as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`flex-1 py-2.5 uppercase ${tab===t?"bg-white/10 text-white":"text-white/50 hover:text-white"}`}>
+            className={`flex-1 py-2 px-1 uppercase ${tab===t?"bg-white/10 text-white":"text-white/50 hover:text-white"}`}>
             {t}
           </button>
         ))}
@@ -110,6 +113,9 @@ export function CMSPanel(p: Props) {
         {tab === "colors" && !p.product && <EmptyProductHint />}
 
         {tab === "specs" && <SpecsTab specRows={p.specRows} addSpec={p.addSpec} updateSpec={p.updateSpec} deleteSpec={p.deleteSpec} />}
+        {tab === "tiers" && (p.product
+          ? <TiersTab tiers={p.productTiers || []} updateTier={p.updateTier!} addTier={p.addTier!} deleteTier={p.deleteTier!} />
+          : <EmptyProductHint />)}
         {tab === "page" && (p.product
           ? <PageTab product={p.product} updateProduct={p.updateProduct} />
           : <EmptyProductHint />)}
