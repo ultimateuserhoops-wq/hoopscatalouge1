@@ -152,7 +152,7 @@ export function useCatalog(productSku?: string | null) {
       product_id: product.id, tier_key: key, label: "NEW TIER", price: "—",
       fabric: "", feature: "", sort_order: order,
     }).select().single();
-    if (data) setProductTiers((p) => [...p, data as ProductTier]);
+    if (data) setProductTiers((p) => [...p, data as unknown as ProductTier]);
   }, [product, productTiers]);
 
   const deleteTier = useCallback(async (id: string) => {
