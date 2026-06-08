@@ -1,4 +1,4 @@
-export type SpreadType = "cover" | "menu" | "product" | "size" | "contact";
+export type SpreadType = "cover" | "menu" | "product" | "gallery" | "size" | "contact";
 
 export interface SpreadDef {
   id: string;
