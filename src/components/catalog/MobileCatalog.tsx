@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Settings, Sparkles, Scissors, Palette, Loader2, Shirt, User, Film, X, Info, ListChecks, ShoppingCart, Paintbrush, ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
 import { useSwipe } from "@/hooks/useSwipe";
 
@@ -500,11 +501,16 @@ function MobileProductView(pp: ProductProps) {
       {/* Display area */}
       <div style={{ flex: 1, position: "relative", overflow: "hidden", touchAction: "pan-y" }} {...colorSwipe}>
         {/* Glow */}
-        <div style={{
-          position: "absolute", top: "50%", left: "45%", transform: "translate(-50%,-50%)",
-          width: "75%", height: "75%", borderRadius: "50%", pointerEvents: "none", zIndex: 1,
-          background: `radial-gradient(ellipse at center, ${hexToRgba(liveColor?.hex_main ?? "#888", 0.28)} 0%, transparent 70%)`,
-        }} />
+        <motion.div
+          animate={{
+            background: `radial-gradient(ellipse at center, ${hexToRgba(liveColor?.hex_main ?? "#888", 0.28)} 0%, transparent 70%)`,
+          }}
+          transition={{ duration: 0.6, ease: "easeInOut" }}
+          style={{
+            position: "absolute", top: "50%", left: "45%", transform: "translate(-50%,-50%)",
+            width: "75%", height: "75%", borderRadius: "50%", pointerEvents: "none", zIndex: 1,
+          }}
+        />
         {/* Court arc */}
         <div style={{
           position: "absolute", bottom: "-30%", left: "50%", transform: "translateX(-50%)",
@@ -514,9 +520,22 @@ function MobileProductView(pp: ProductProps) {
         }} />
 
         {/* Photo */}
-        <div className="product-view" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>
+        <motion.div
+          className="product-view"
+          animate={{ y: [0, -6, 0] }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", repeatType: "loop" }}
+          style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}
+        >
           <ProductDisplayUpload colorId={liveColor?.id ?? null} slotType={displayMode} isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
-            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <AnimatePresence mode="wait">
+            <motion.div
+              key={`mobile-media-${liveColor?.id}-${displayMode}`}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+            >
               {photo ? (
                 <img loading="lazy" decoding="async" src={photo} alt={liveColor?.name} style={{ maxWidth: "85%", maxHeight: "90%", objectFit: "contain", mixBlendMode: "normal" }} />
               ) : displayMode === "jersey" && liveColor ? (
@@ -531,9 +550,10 @@ function MobileProductView(pp: ProductProps) {
                   </div>
                 </div>
               )}
-            </div>
+            </motion.div>
+            </AnimatePresence>
           </ProductDisplayUpload>
-        </div>
+        </motion.div>
 
         {/* Display mode buttons */}
         <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: 8, zIndex: 10 }}>
@@ -544,14 +564,22 @@ function MobileProductView(pp: ProductProps) {
           ] as const).map(({ k, I }) => {
             const active = displayMode === k;
             return (
-              <button key={k} onClick={() => p.setDisplayMode(k)} style={{
-                width: 36, height: 36, borderRadius: "50%",
-                background: active ? "var(--t-accent)" : "rgba(0,0,0,0.45)",
-                border: `1px solid ${active ? "var(--t-accent)" : "rgba(255,255,255,0.15)"}`,
-                color: active ? "#000" : "rgba(255,255,255,0.7)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                backdropFilter: "blur(6px)",
-              }} aria-label={k}><I size={15} /></button>
+              <motion.button
+                key={k}
+                onClick={() => p.setDisplayMode(k)}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.92 }}
+                animate={{
+                  background: active ? "var(--t-accent)" : "rgba(0,0,0,0.45)",
+                  color: active ? "#000000" : "rgba(255,255,255,0.7)",
+                }}
+                transition={{ duration: 0.2 }}
+                style={{
+                  width: 36, height: 36, borderRadius: "50%",
+                  border: `1px solid ${active ? "var(--t-accent)" : "rgba(255,255,255,0.15)"}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  backdropFilter: "blur(6px)",
+                }} aria-label={k}><I size={15} /></motion.button>
             );
           })}
         </div>
@@ -662,6 +690,7 @@ function MobileProductView(pp: ProductProps) {
 
       {/* Panels */}
 
+      <AnimatePresence>
       {activeTab === "info" && (
         <MobilePanel title="Product Info" onClose={() => setActiveTab(null)}>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -730,6 +759,7 @@ function MobileProductView(pp: ProductProps) {
           </div>
         </MobilePanel>
       )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -752,7 +782,12 @@ function MobileColorCard({ color, isActive, onClick, canGenerate, hasPhoto, onGe
   canGenerate: boolean; hasPhoto: boolean; onGenerate: () => void; generating: boolean;
 }) {
   return (
-    <div style={{ position: "relative", overflow: "visible", flexShrink: 0, width: 46, height: 46 }} onClick={onClick}>
+    <motion.div
+      onClick={onClick}
+      animate={{ scale: isActive ? 1.08 : 1 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      style={{ position: "relative", overflow: "visible", flexShrink: 0, width: 46, height: 46 }}
+    >
       <div style={{
         position: "absolute", inset: 0, overflow: "hidden", borderRadius: 4,
         border: isActive ? "2px solid var(--t-accent)" : "1px solid var(--t-border)",
@@ -782,7 +817,7 @@ function MobileColorCard({ color, isActive, onClick, canGenerate, hasPhoto, onGe
           <Loader2 size={14} className="animate-spin" color="#fff" />
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -848,13 +883,25 @@ function MobileCustomColor({ index, isGradient, onApply }: { index: number; isGr
 function MobilePanel({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 50, animation: "fadeIn 0.2s ease" }} />
-      <div style={{
-        position: "fixed", bottom: 0, left: 0, right: 0, height: "80dvh",
-        background: "var(--t-surface)", borderRadius: "16px 16px 0 0", borderTop: "2px solid var(--t-accent)",
-        zIndex: 51, display: "flex", flexDirection: "column",
-        animation: "slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1)", overflow: "hidden",
-      }}>
+      <motion.div
+        onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 50 }}
+      />
+      <motion.div
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", stiffness: 380, damping: 38, mass: 1 }}
+        style={{
+          position: "fixed", bottom: 0, left: 0, right: 0, height: "80dvh",
+          background: "var(--t-surface)", borderRadius: "16px 16px 0 0", borderTop: "2px solid var(--t-accent)",
+          zIndex: 51, display: "flex", flexDirection: "column", overflow: "hidden",
+        }}
+      >
         <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px 10px", borderBottom: "1px solid var(--t-border)", flexShrink: 0 }}>
           <div style={{ position: "absolute", top: 6, left: "50%", transform: "translateX(-50%)", width: 32, height: 3, borderRadius: 2, background: "var(--t-border)" }} />
           <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.25em", color: "var(--t-text)", textTransform: "uppercase" }}>{title}</div>
@@ -864,7 +911,7 @@ function MobilePanel({ title, onClose, children }: { title: string; onClose: () 
           }} aria-label="Close"><X size={14} /></button>
         </div>
         <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>{children}</div>
-      </div>
+      </motion.div>
     </>
   );
 }
