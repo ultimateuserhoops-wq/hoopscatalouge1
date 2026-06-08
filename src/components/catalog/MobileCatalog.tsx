@@ -10,6 +10,7 @@ import { hexToRgba, callGemini, getCurrentThemeBg, buildMatchBgPrompt, buildColo
 import { notify } from "@/lib/toast";
 import { MENU_PAGES, type SpreadDef } from "@/lib/catalog-spreads";
 import { CMSPanel } from "./CMSPanel";
+import { GallerySpread } from "./spreads/GallerySpread";
 
 type CatalogCtx = {
   product: Product | null;
@@ -147,6 +148,10 @@ export function MobileCatalog({ spreadIndex, setSpreadIndex, cat, isAdmin, cmsOp
         cat.loading || !cat.product
           ? <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--t-subtext)" }}>LOADING PRODUCT…</div>
           : <MobileProductView cat={cat as CatalogCtx & { product: Product }} isAdmin={isAdmin} pageSwipeHandlers={pageSwipe} />
+      ) : current.type === "gallery" ? (
+        <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
+          <GallerySpread spread={current} isAdmin={isAdmin} full />
+        </div>
       ) : (
         <div style={{ flex: 1, overflow: "auto", touchAction: "pan-y" }} {...nonProductSwipe}>
           {current.type === "cover" && <MobileCover />}
