@@ -242,7 +242,14 @@ export function CatalogSpread(p: Props) {
     >
       <div className="absolute inset-0 grid grid-cols-2" style={{ borderRadius: 4, overflow: "hidden" }}>
         {/* LEFT PAGE */}
-        <div className="relative grid-bg" style={{ background: leftPageBg }}>
+        <motion.div
+          key={`left-${product.id}`}
+          initial={{ x: -40, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
+          className="relative grid-bg"
+          style={{ background: leftPageBg }}
+        >
           {/* Court arcs */}
           <div className="court-arc" style={{ width: 480, height: 240 }} />
           <div className="court-arc" style={{ width: 260, height: 130 }} />
@@ -261,10 +268,16 @@ export function CatalogSpread(p: Props) {
 
           {/* Corner badge */}
           {product.badge_label && (
-            <div className="absolute left-0 px-3 py-1 text-[0.55rem] font-bold font-condensed tracking-widest text-white clip-arrow-right"
-              style={{ top: 44, background: activeColor?.hex_main || "var(--t-accent)", zIndex: 15 }}>
+            <motion.div
+              key={`badge-${product.id}`}
+              initial={{ x: -60, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.15, type: "spring", stiffness: 280, damping: 22 }}
+              className="absolute left-0 px-3 py-1 text-[0.55rem] font-bold font-condensed tracking-widest text-white clip-arrow-right"
+              style={{ top: 44, background: activeColor?.hex_main || "var(--t-accent)", zIndex: 15 }}
+            >
               {product.badge_label}
-            </div>
+            </motion.div>
           )}
 
           {/* Display mode buttons */}
@@ -273,14 +286,17 @@ export function CatalogSpread(p: Props) {
               const Icon = m === "jersey" ? Shirt : m === "body" ? User : Film;
               const active = displayMode === m;
               return (
-                <button key={m} onClick={() => p.setDisplayMode(m)}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center transition ${active ? "text-white" : ""}`}
-                  style={{
+                <motion.button key={m} onClick={() => p.setDisplayMode(m)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.92 }}
+                  animate={{
                     background: active ? "var(--t-accent)" : "rgba(255,255,255,0.06)",
-                    color: active ? "white" : "var(--t-subtext)",
-                    border: "1px solid var(--t-border)",
+                    color: active ? "#ffffff" : "var(--t-subtext)",
                   }}
-                  title={m}><Icon size={14} /></button>
+                  transition={{ duration: 0.2 }}
+                  className="w-9 h-9 rounded-full flex items-center justify-center"
+                  style={{ border: "1px solid var(--t-border)" }}
+                  title={m}><Icon size={14} /></motion.button>
               );
             })}
           </div>
@@ -288,10 +304,28 @@ export function CatalogSpread(p: Props) {
           {/* Product hero wrap — bounded between top bar (44px) and product label (72px) */}
           <div className="product-hero-wrap" style={{ position: "absolute", top: 44, left: 0, right: 0, height: 452, overflow: "hidden" }}>
             {/* Glow halo */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ width: 300, height: 300, background: `radial-gradient(circle, ${haloColor}, transparent 70%)` }} />
+            <motion.div
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+              animate={{ background: `radial-gradient(circle, ${haloColor}, transparent 70%)` }}
+              transition={{ duration: 0.6, ease: "easeInOut" }}
+              style={{ width: 300, height: 300 }}
+            />
 
-            <div className="product-view" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+            <motion.div
+              className="product-view"
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", repeatType: "loop" }}
+              style={{ position: "absolute", inset: 0, overflow: "hidden" }}
+            >
+            <AnimatePresence mode="wait">
+            <motion.div
+              key={`media-${p.activeColorId}-${displayMode}`}
+              initial={{ opacity: 0, scale: 0.94, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: -8 }}
+              transition={{ duration: 0.28, ease: "easeOut" }}
+              style={{ position: "absolute", inset: 0 }}
+            >
               {displayMode === "jersey" && (
                 <div style={{ position: "absolute", inset: 0 }}>
                   <ProductDisplayUpload colorId={p.activeColorId} slotType="jersey" isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
@@ -336,7 +370,9 @@ export function CatalogSpread(p: Props) {
                   )}
                 </div>
               )}
-            </div>
+            </motion.div>
+            </AnimatePresence>
+            </motion.div>
 
             {/* AI action row — inside hero wrap, anchored bottom */}
             <div className="absolute left-1/2 -translate-x-1/2 flex gap-2 z-20" style={{ bottom: 8 }}>
