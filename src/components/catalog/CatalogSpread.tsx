@@ -471,21 +471,65 @@ export function CatalogSpread(p: Props) {
             <AnimatedTitle key={`title-${product.id}`} text={product.name} />
             <div className="text-xs mt-1 font-condensed" style={{ color: "var(--t-subtext)" }}>{product.subtitle}</div>
 
-            {/* Price row */}
-            <div className="flex items-end gap-3 mt-4">
-              <AnimatedPrice key={`price-${product.id}`} price={product.price || ""} />
-              <div className="text-[0.62rem] font-condensed tracking-widest mb-1" style={{ color: "var(--t-subtext)" }}>VND</div>
-              <div className="text-[0.7rem] line-through mb-1" style={{ color: "var(--t-subtext)" }}>{product.price_original}</div>
-              {product.price_save_label && (
-                <div className="text-[0.55rem] font-bold font-condensed tracking-widest px-1.5 py-0.5 mb-1 rounded bg-emerald-600 text-white">
-                  {product.price_save_label}
-                </div>
-              )}
-            </div>
-
-            <p className="text-[0.78rem] italic mt-3 line-clamp-2" style={{ color: "var(--t-subtext)" }}>
-              {product.description}
-            </p>
+            {(() => {
+              const isJersey = (product.category || "").toUpperCase() === "JERSEYS";
+              const tiers = p.productTiers || [];
+              if (isJersey && tiers.length > 0) {
+                const activeKey = p.activeTierKey || tiers[0].tier_key;
+                return (
+                  <>
+                    <div className="mt-3 flex flex-col gap-1">
+                      <div className="text-[0.55rem] font-condensed tracking-[0.3em] uppercase mb-0.5" style={{ color: "var(--t-subtext)" }}>
+                        Product Range
+                      </div>
+                      {tiers.map((t) => {
+                        const active = t.tier_key === activeKey;
+                        return (
+                          <button
+                            key={t.id}
+                            onClick={() => p.setActiveTierKey?.(t.tier_key)}
+                            className="flex items-baseline justify-between gap-3 py-1.5 px-2 rounded text-left transition-colors"
+                            style={{
+                              background: active ? "var(--t-surface)" : "transparent",
+                              border: active ? "1px solid var(--t-accent)" : "1px solid var(--t-border)",
+                            }}
+                          >
+                            <span className="font-condensed tracking-widest text-[0.7rem] uppercase" style={{ color: active ? "var(--t-accent)" : "var(--t-text)" }}>
+                              {t.label}
+                            </span>
+                            <span className="font-display text-base" style={{ color: active ? "var(--t-accent)" : "var(--t-text)" }}>
+                              {t.price || "—"}
+                              <span className="ml-1 text-[0.55rem] font-condensed tracking-widest" style={{ color: "var(--t-subtext)" }}>VND</span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[0.75rem] italic mt-3 line-clamp-2" style={{ color: "var(--t-subtext)" }}>
+                      {product.description}
+                    </p>
+                  </>
+                );
+              }
+              return (
+                <>
+                  {/* Price row */}
+                  <div className="flex items-end gap-3 mt-4">
+                    <AnimatedPrice key={`price-${product.id}`} price={product.price || ""} />
+                    <div className="text-[0.62rem] font-condensed tracking-widest mb-1" style={{ color: "var(--t-subtext)" }}>VND</div>
+                    <div className="text-[0.7rem] line-through mb-1" style={{ color: "var(--t-subtext)" }}>{product.price_original}</div>
+                    {product.price_save_label && (
+                      <div className="text-[0.55rem] font-bold font-condensed tracking-widest px-1.5 py-0.5 mb-1 rounded bg-emerald-600 text-white">
+                        {product.price_save_label}
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-[0.78rem] italic mt-3 line-clamp-2" style={{ color: "var(--t-subtext)" }}>
+                    {product.description}
+                  </p>
+                </>
+              );
+            })()}
 
             {/* Color section */}
             <div className="mt-4 flex items-center justify-between text-[0.6rem] font-condensed tracking-widest uppercase">
