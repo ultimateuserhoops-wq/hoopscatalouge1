@@ -1,3 +1,83 @@
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function HeroSlideshow() {
+  const [images, setImages] = useState<string[]>([]);
+  const [idx, setIdx] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase
+      .from("color_variants")
+      .select("jersey_photo,body_photo")
+      .then(({ data }) => {
+        if (cancelled || !data) return;
+        const urls = Array.from(
+          new Set(
+            (data as { jersey_photo: string | null; body_photo: string | null }[])
+              .flatMap((r) => [r.jersey_photo, r.body_photo])
+              .filter((u): u is string => !!u && u.length > 0),
+          ),
+        );
+        setImages(shuffle(urls));
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (images.length < 2) return;
+    const id = window.setInterval(() => {
+      setIdx((prev) => {
+        if (images.length <= 1) return prev;
+        let next = Math.floor(Math.random() * images.length);
+        if (next === prev) next = (prev + 1) % images.length;
+        return next;
+      });
+    }, 10000);
+    return () => window.clearInterval(id);
+  }, [images]);
+
+  if (images.length === 0) return null;
+  const src = images[idx];
+
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden", background: "var(--t-surface)" }}>
+      <AnimatePresence mode="sync">
+        <motion.div
+          key={src}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1.2, ease: "easeInOut" }}
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: `url(${src})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
+        />
+      </AnimatePresence>
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.55) 100%)",
+        pointerEvents: "none",
+      }} />
+    </div>
+  );
+}
+
 export function CoverSpread() {
   const cats = ["Jerseys", "Warm-Ups", "Polo", "Jackets", "1/4 Zip", "Hoodies", "Socks"];
   return (
@@ -8,6 +88,8 @@ export function CoverSpread() {
       <div className="absolute inset-0 grid grid-cols-2" style={{ borderRadius: 4, overflow: "hidden" }}>
         {/* LEFT — dark watermark */}
         <div className="relative grid-bg" style={{ background: "var(--t-surface)", overflow: "hidden" }}>
+          {/* Dynamic product slideshow (falls back to court art if no images load) */}
+          <HeroSlideshow />
           {/* Diagonal HOOPS watermark */}
           <div style={{
             position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
