@@ -69,11 +69,6 @@ function HeroSlideshow() {
           }}
         />
       </AnimatePresence>
-      <div style={{
-        position: "absolute", inset: 0,
-        background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.55) 100%)",
-        pointerEvents: "none",
-      }} />
     </div>
   );
 }
