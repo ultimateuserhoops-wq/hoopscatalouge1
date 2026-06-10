@@ -1,6 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Loader2, Upload, Trash2, Scissors, Download, Shirt } from "lucide-react";
+import {
+  Sparkles,
+  Loader2,
+  Upload,
+  Trash2,
+  Scissors,
+  Download,
+  Shirt,
+  Save,
+  Star,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   callGeminiTwoImages,
@@ -29,34 +41,58 @@ interface Props {
   full?: boolean; // mobile mode
 }
 
-const GEN_PROMPT = `You are a professional sportswear product visualizer.
+const GEN_PROMPT = `You are a professional sportswear designer.
 
-IMAGE 1: A flat jersey photo showing the jersey design, colors, and graphics
-IMAGE 2: An athlete/model template (the person to dress)
+IMAGE 1: A flat jersey top (front view) showing colors, graphics, numbers, logos
+IMAGE 2: A flat shorts (front view) showing the cut, waistband, side stripes, hem style
 
-YOUR TASK: Dress the athlete in IMAGE 2 wearing:
-- The jersey from IMAGE 1 (exact same colors, graphics, numbers, logos)
-- Basketball shorts that MATCH the jersey's colorway (same primary color, same trim/accent color)
-- The shorts should have a similar design aesthetic to the jersey
+YOUR TASK: Create a professional flat-lay product photo of a complete basketball set:
+- Jersey: exact colors, graphics, numbers, text, logos from IMAGE 1
+- Shorts: exact cut/silhouette/hem/waistband style from IMAGE 2, but recolored to match the jersey's primary color and trim colors from IMAGE 1
+- Both items displayed together as a flat-lay product set on a neutral/dark background
+- High quality, professional product photography style
+- No model/person — flat product only
 
-REQUIREMENTS:
-- Keep the athlete's pose, body, skin, face, hair exactly as in IMAGE 2
-- The jersey on the athlete must show the same design as IMAGE 1
-- Background should match the athlete template background
-- Result looks like a professional on-body product photo
-- High quality output
+The shorts STYLE (shape, cut, length, waistband height, side stripe position) comes from IMAGE 2.
+The shorts COLORS come from IMAGE 1 jersey colors.`;
 
-OUTPUT: The athlete wearing the complete basketball set`;
+function useSectionSwipe(onLeft: () => void, onRight: () => void) {
+  const startX = useRef<number | null>(null);
+  return {
+    onMouseDown: (e: React.MouseEvent) => {
+      startX.current = e.clientX;
+    },
+    onMouseUp: (e: React.MouseEvent) => {
+      if (startX.current === null) return;
+      const dx = e.clientX - startX.current;
+      if (Math.abs(dx) > 40) (dx < 0 ? onLeft : onRight)();
+      startX.current = null;
+    },
+    onTouchStart: (e: React.TouchEvent) => {
+      startX.current = e.touches[0].clientX;
+    },
+    onTouchEnd: (e: React.TouchEvent) => {
+      if (startX.current === null) return;
+      const dx = e.changedTouches[0].clientX - startX.current;
+      if (Math.abs(dx) > 40) (dx < 0 ? onLeft : onRight)();
+      startX.current = null;
+    },
+  };
+}
 
 export function MixMatchSpread({ isAdmin, full }: Props) {
   const [jerseys, setJerseys] = useState<MixTemplate[]>([]);
   const [shorts, setShorts] = useState<MixTemplate[]>([]);
   const [athlete, setAthlete] = useState<string | null>(null);
-  const [selectedJersey, setSelectedJersey] = useState<string | null>(null);
-  const [selectedShorts, setSelectedShorts] = useState<string | null>(null);
-  const [result, setResult] = useState<string | null>(null);
+  const [jerseyIndex, setJerseyIndex] = useState(0);
+  const [shortsIndex, setShortsIndex] = useState(0);
+  const [generatedResult, setGeneratedResult] = useState<string | null>(null);
+  const [defaultResult, setDefaultResult] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [removingBg, setRemovingBg] = useState(false);
+
+  const selectedJersey = jerseys[jerseyIndex] || null;
+  const selectedShorts = shorts[shortsIndex] || null;
 
   async function reload() {
     const { data } = await supabase
@@ -73,20 +109,42 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
     reload();
   }, []);
 
-  async function generate() {
-    if (!selectedJersey || !selectedShorts) {
-      notify("Select a jersey and shorts first", true);
-      return;
+  useEffect(() => {
+    setGeneratedResult(null);
+  }, [jerseyIndex, shortsIndex]);
+
+  useEffect(() => {
+    async function loadDefault() {
+      if (!selectedJersey?.id || !selectedShorts?.id) {
+        setDefaultResult(null);
+        return;
+      }
+      const { data } = await (supabase as any)
+        .from("mix_match_defaults")
+        .select("result_photo")
+        .eq("jersey_id", selectedJersey.id)
+        .eq("shorts_id", selectedShorts.id)
+        .maybeSingle();
+      setDefaultResult(data?.result_photo || null);
     }
-    if (!athlete) {
-      notify("Upload an athlete template in CMS first", true);
+    loadDefault();
+  }, [selectedJersey?.id, selectedShorts?.id]);
+
+  async function generate() {
+    if (!selectedJersey?.photo || !selectedShorts?.photo) {
+      notify("Select a jersey and shorts first", true);
       return;
     }
     setGenerating(true);
     try {
-      const out = await callGeminiTwoImages(selectedJersey, athlete, GEN_PROMPT, 1280);
-      setResult(out);
-      notify("Set generated");
+      const result = await callGeminiTwoImages(
+        selectedJersey.photo,
+        selectedShorts.photo,
+        GEN_PROMPT,
+        1280
+      );
+      setGeneratedResult(result);
+      notify("Set generated ✓");
     } catch (e) {
       notify(getAIErrorMessage(e), true);
     } finally {
@@ -95,13 +153,13 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
   }
 
   async function removeBg() {
-    if (!result) return;
+    if (!generatedResult) return;
     setRemovingBg(true);
     try {
       const bg = getLeftPageBg(null);
-      const r = await callGemini(result, buildRemoveBgToSolidPrompt(bg));
+      const r = await callGemini(generatedResult, buildRemoveBgToSolidPrompt(bg));
       const flat = await compositeOntoBackground(r, bg);
-      setResult(flat);
+      setGeneratedResult(flat);
       notify("Background removed");
     } catch (e) {
       notify(getAIErrorMessage(e), true);
@@ -110,8 +168,41 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
     }
   }
 
-  const both = selectedJersey && selectedShorts;
+  async function saveResult() {
+    if (!generatedResult || !selectedJersey || !selectedShorts) return;
+    const { error } = await (supabase as any).from("mix_match_results").insert({
+      jersey_id: selectedJersey.id,
+      shorts_id: selectedShorts.id,
+      result_photo: generatedResult,
+    });
+    if (error) notify(error.message, true);
+    else notify("Saved ✓");
+  }
 
+  async function setAsDefault() {
+    if (!generatedResult || !selectedJersey || !selectedShorts) return;
+    const { error } = await (supabase as any)
+      .from("mix_match_defaults")
+      .upsert(
+        {
+          jersey_id: selectedJersey.id,
+          shorts_id: selectedShorts.id,
+          result_photo: generatedResult,
+        },
+        { onConflict: "jersey_id,shorts_id" }
+      );
+    if (error) {
+      notify(error.message, true);
+      return;
+    }
+    setDefaultResult(generatedResult);
+    notify("Set as default ✓");
+  }
+
+  const canGenerate = !!(selectedJersey?.photo && selectedShorts?.photo);
+  const displayResult = generatedResult || defaultResult;
+
+  /* ─── Mobile vertical layout ─── */
   if (full) {
     return (
       <div
@@ -128,17 +219,19 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
           overflowY: "auto",
         }}
       >
-        <Section
-          title="SELECT JERSEY"
+        <MobileSelector
+          emoji="👕"
+          label="SELECT JERSEY"
           items={jerseys}
-          selected={selectedJersey}
-          onSelect={setSelectedJersey}
+          index={jerseyIndex}
+          setIndex={setJerseyIndex}
         />
-        <Section
-          title="SELECT SHORTS"
+        <MobileSelector
+          emoji="🩳"
+          label="SELECT SHORTS"
           items={shorts}
-          selected={selectedShorts}
-          onSelect={setSelectedShorts}
+          index={shortsIndex}
+          setIndex={setShortsIndex}
         />
         <div
           style={{
@@ -146,75 +239,38 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
             background: "var(--t-surface)",
             border: "1px solid var(--t-border)",
             borderRadius: 6,
-            minHeight: 260,
+            minHeight: 280,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             overflow: "hidden",
           }}
         >
-          <AnimatePresence mode="wait">
-            {result ? (
-              <motion.img
-                key="r"
-                src={result}
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                style={{ maxWidth: "100%", maxHeight: 320, objectFit: "contain" }}
-                alt=""
-              />
-            ) : (
-              <motion.div
-                key="ph"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                style={{ textAlign: "center", color: "var(--t-subtext)", padding: 20 }}
-              >
-                <Shirt size={36} style={{ margin: "0 auto 8px" }} />
-                <div className="font-condensed tracking-widest text-[0.65rem]">
-                  PICK A JERSEY + SHORTS, THEN GENERATE
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          {generating && <LoadingOverlay label="Generating set…" />}
+          <ResultArea
+            generatedResult={generatedResult}
+            defaultResult={defaultResult}
+            athlete={athlete}
+          />
+          {(generating || removingBg) && (
+            <LoadingOverlay label={generating ? "Generating…" : "Removing BG…"} />
+          )}
         </div>
-        <motion.button
-          onClick={generate}
-          disabled={!both || generating}
-          animate={both && !generating ? { scale: [1, 1.03, 1] } : { scale: 1 }}
-          transition={{ duration: 1.6, repeat: both ? Infinity : 0 }}
-          style={{
-            background: both ? "var(--t-accent)" : "rgba(255,255,255,0.08)",
-            color: "#fff",
-            border: "1px solid var(--t-accent)",
-            padding: "12px",
-            borderRadius: 6,
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 700,
-            letterSpacing: "0.2em",
-            fontSize: "0.8rem",
-            opacity: both ? 1 : 0.5,
-            cursor: both ? "pointer" : "not-allowed",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-          }}
-        >
-          <Sparkles size={14} /> GENERATE SET
-        </motion.button>
-        {result && (
-          <div style={{ display: "flex", gap: 8 }}>
-            {isAdmin && (
+        <GenerateButton onClick={generate} canGenerate={canGenerate} generating={generating} />
+        {displayResult && (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <SmallBtn onClick={saveResult} disabled={!generatedResult}>
+              <Save size={11} /> SAVE
+            </SmallBtn>
+            <SmallBtn onClick={setAsDefault} disabled={!generatedResult}>
+              <Star size={11} /> DEFAULT
+            </SmallBtn>
+            {isAdmin && generatedResult && (
               <SmallBtn onClick={removeBg} disabled={removingBg}>
-                <Scissors size={11} /> REMOVE BG
+                <Scissors size={11} /> BG
               </SmallBtn>
             )}
             {isAdmin && (
-              <SmallBtn onClick={() => downloadImageHD(result, "mixmatch-set.png", 2000)}>
+              <SmallBtn onClick={() => downloadImageHD(displayResult, "mixmatch-set.png", 2000)}>
                 <Download size={11} /> HD
               </SmallBtn>
             )}
@@ -224,6 +280,7 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
     );
   }
 
+  /* ─── Desktop spread ─── */
   return (
     <div
       className="catalog-themed relative"
@@ -237,19 +294,19 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
     >
       <div
         className="absolute inset-0 grid grid-cols-2"
-        style={{ borderRadius: 4, overflow: "hidden", background: "var(--t-bg)" }}
+        style={{ borderRadius: 4, overflow: "hidden" }}
       >
-        {/* LEFT — selectors */}
+        {/* LEFT page: 440×570, two selector sections */}
         <motion.div
           initial={{ x: -40, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
           className="relative"
           style={{
-            background: "var(--t-bg)",
+            background: "#0a0a0a",
             display: "flex",
             flexDirection: "column",
-            color: "var(--t-text)",
+            color: "#fff",
           }}
         >
           {/* accent bar */}
@@ -259,178 +316,159 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
               left: 0,
               top: 0,
               bottom: 0,
-              width: 4,
+              width: 3,
               background: "var(--t-accent)",
+              zIndex: 2,
             }}
           />
-          <div style={{ flex: 1, padding: 16, paddingLeft: 20, display: "flex", flexDirection: "column", minHeight: 0 }}>
-            <SelectorPanel
-              title="SELECT JERSEY"
-              items={jerseys}
-              selected={selectedJersey}
-              onSelect={setSelectedJersey}
-            />
-          </div>
-          <div style={{ height: 1, background: "var(--t-border)" }} />
-          <div style={{ flex: 1, padding: 16, paddingLeft: 20, display: "flex", flexDirection: "column", minHeight: 0 }}>
-            <SelectorPanel
-              title="SELECT SHORTS"
-              items={shorts}
-              selected={selectedShorts}
-              onSelect={setSelectedShorts}
-            />
-          </div>
+          <SelectorSection
+            emoji="👕"
+            label="SELECT JERSEY"
+            items={jerseys}
+            index={jerseyIndex}
+            setIndex={setJerseyIndex}
+          />
+          <div style={{ height: 1, background: "rgba(255,255,255,0.08)" }} />
+          <SelectorSection
+            emoji="🩳"
+            label="SELECT SHORTS"
+            items={shorts}
+            index={shortsIndex}
+            setIndex={setShortsIndex}
+          />
         </motion.div>
 
-        {/* RIGHT — result */}
+        {/* RIGHT page: 440×570, result */}
         <motion.div
           initial={{ x: 40, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.08, ease: [0.32, 0.72, 0, 1] }}
           className="relative"
           style={{
-            background: "var(--t-surface)",
+            background: "var(--t-surface, #181818)",
             display: "flex",
             flexDirection: "column",
+            color: "var(--t-text)",
           }}
         >
-          {/* title */}
+          {/* Top bar 44px */}
           <div
-            className="font-display"
             style={{
-              padding: "14px 18px 0",
-              fontSize: "1.4rem",
-              letterSpacing: "0.08em",
-              color: "var(--t-text)",
+              height: 44,
+              padding: "0 16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderBottom: "1px solid var(--t-border)",
             }}
           >
-            BUILD YOUR SET<span style={{ color: "var(--t-accent)" }}>.</span>
-          </div>
-          <div
-            className="font-condensed"
-            style={{
-              padding: "0 18px 8px",
-              fontSize: "0.6rem",
-              letterSpacing: "0.22em",
-              color: "var(--t-subtext)",
-              textTransform: "uppercase",
-            }}
-          >
-            Pick a jersey · pick shorts · generate the on-court look
+            <div
+              className="font-display"
+              style={{ fontSize: "1.1rem", letterSpacing: "0.08em" }}
+            >
+              BUILD YOUR SET
+            </div>
+            <div
+              className="font-condensed"
+              style={{
+                color: "var(--t-accent)",
+                fontWeight: 700,
+                letterSpacing: "0.18em",
+                fontSize: "0.7rem",
+              }}
+            >
+              HOOPS.
+            </div>
           </div>
 
+          {/* Result area (44 → 480 = 436px) */}
           <div
             style={{
-              flex: 1,
-              margin: "8px 18px",
-              border: "1px solid var(--t-border)",
-              borderRadius: 6,
-              background: "var(--t-bg)",
+              height: 436,
               position: "relative",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               overflow: "hidden",
-              minHeight: 0,
+              background: "var(--t-bg)",
             }}
           >
-            <AnimatePresence mode="wait">
-              {result ? (
-                <motion.img
-                  key="result"
-                  src={result}
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ duration: 0.4 }}
-                  alt=""
-                  style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
-                />
-              ) : athlete ? (
-                <motion.img
-                  key="ath"
-                  src={athlete}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 0.45 }}
-                  exit={{ opacity: 0 }}
-                  alt=""
-                  style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
-                />
-              ) : (
-                <motion.div
-                  key="placeholder"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-center font-condensed"
-                  style={{
-                    color: "var(--t-subtext)",
-                    fontSize: "0.65rem",
-                    letterSpacing: "0.22em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  <Shirt size={42} style={{ margin: "0 auto 10px" }} />
-                  <div>Athlete template not set</div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {generating && <LoadingOverlay label="Generating your set…" />}
+            <ResultArea
+              generatedResult={generatedResult}
+              defaultResult={defaultResult}
+              athlete={athlete}
+            />
+            {(generating || removingBg) && (
+              <LoadingOverlay label={generating ? "Generating your set…" : "Removing BG…"} />
+            )}
           </div>
 
-          {/* Bottom action bar */}
-          <div style={{ padding: "10px 18px 14px", display: "flex", alignItems: "center", gap: 8 }}>
-            <motion.button
+          {/* Action bar (480 → 540 = 60px) */}
+          <div
+            style={{
+              height: 60,
+              padding: "0 14px",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <GenerateButton
               onClick={generate}
-              disabled={!both || generating}
-              animate={both && !generating ? { scale: [1, 1.04, 1] } : { scale: 1 }}
-              transition={{ duration: 1.6, repeat: both && !generating ? Infinity : 0 }}
-              style={{
-                flex: 1,
-                background: both ? "var(--t-accent)" : "rgba(255,255,255,0.06)",
-                color: "#fff",
-                border: "1px solid var(--t-accent)",
-                padding: "12px 14px",
-                borderRadius: 6,
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontWeight: 700,
-                letterSpacing: "0.2em",
-                fontSize: "0.78rem",
-                opacity: both ? 1 : 0.45,
-                cursor: both && !generating ? "pointer" : "not-allowed",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-              }}
-            >
-              <Sparkles size={14} /> {generating ? "GENERATING…" : "GENERATE SET"}
-            </motion.button>
-            {result && isAdmin && (
+              canGenerate={canGenerate}
+              generating={generating}
+            />
+            {generatedResult && (
+              <>
+                <SmallBtn onClick={saveResult}>
+                  <Save size={11} /> SAVE
+                </SmallBtn>
+                <SmallBtn onClick={setAsDefault}>
+                  <Star size={11} /> DEFAULT
+                </SmallBtn>
+              </>
+            )}
+            {isAdmin && generatedResult && (
               <SmallBtn onClick={removeBg} disabled={removingBg}>
-                {removingBg ? <Loader2 size={11} className="animate-spin" /> : <Scissors size={11} />} BG
+                {removingBg ? (
+                  <Loader2 size={11} className="animate-spin" />
+                ) : (
+                  <Scissors size={11} />
+                )}{" "}
+                BG
               </SmallBtn>
             )}
-            {result && isAdmin && (
-              <SmallBtn onClick={() => downloadImageHD(result, "mixmatch-set.png", 2400)}>
+            {isAdmin && displayResult && (
+              <SmallBtn
+                onClick={() => downloadImageHD(displayResult, "mixmatch-set.png", 2400)}
+              >
                 <Download size={11} /> HD
               </SmallBtn>
             )}
           </div>
 
+          {/* Info strip (540 → 570 = 30px) */}
           <div
             className="font-condensed"
             style={{
-              position: "absolute",
-              right: 14,
-              bottom: 4,
-              fontSize: "0.5rem",
-              letterSpacing: "0.25em",
+              height: 30,
+              padding: "0 16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              fontSize: "0.55rem",
+              letterSpacing: "0.22em",
               color: "var(--t-subtext)",
               textTransform: "uppercase",
+              borderTop: "1px solid var(--t-border)",
             }}
           >
-            p.04–05
+            <span>
+              {selectedJersey?.photo_name || selectedJersey?.id?.slice(0, 6) || "—"}
+              {"  ×  "}
+              {selectedShorts?.photo_name || selectedShorts?.id?.slice(0, 6) || "—"}
+            </span>
+            <span>p.06–07</span>
           </div>
         </motion.div>
       </div>
@@ -438,78 +476,153 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
   );
 }
 
-function SelectorPanel({
-  title,
+/* ─── Selector section (left page) ─── */
+function SelectorSection({
+  emoji,
+  label,
   items,
-  selected,
-  onSelect,
+  index,
+  setIndex,
 }: {
-  title: string;
+  emoji: string;
+  label: string;
   items: MixTemplate[];
-  selected: string | null;
-  onSelect: (photo: string | null) => void;
+  index: number;
+  setIndex: (i: number) => void;
 }) {
-  const current = items.find((i) => i.photo === selected) || null;
+  const current = items[index] || null;
+  const cycle = (dir: 1 | -1) => {
+    if (items.length === 0) return;
+    setIndex((index + dir + items.length) % items.length);
+  };
+  const swipe = useSectionSwipe(
+    () => cycle(1),
+    () => cycle(-1)
+  );
   return (
-    <>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      {/* label strip 32px */}
       <div
-        className="font-condensed"
         style={{
-          fontSize: "0.6rem",
-          letterSpacing: "0.25em",
-          color: "var(--t-subtext)",
-          textTransform: "uppercase",
-          marginBottom: 8,
+          height: 32,
+          paddingLeft: 14,
+          paddingRight: 12,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
-        {title}
+        <span
+          className="font-condensed"
+          style={{
+            fontSize: "0.55rem",
+            letterSpacing: "0.25em",
+            color: "var(--t-accent)",
+            textTransform: "uppercase",
+            fontWeight: 700,
+          }}
+        >
+          {emoji} {label}
+        </span>
+        <span
+          className="font-condensed"
+          style={{
+            fontSize: "0.55rem",
+            letterSpacing: "0.22em",
+            color: "rgba(255,255,255,0.55)",
+            textTransform: "uppercase",
+          }}
+        >
+          {current?.photo_name || (items.length ? `${index + 1}/${items.length}` : "SWIPE TO CHOOSE")}
+        </span>
       </div>
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 0 }}>
+
+      {/* preview area */}
+      <div
+        {...swipe}
+        style={{
+          flex: 1,
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 8,
+          cursor: items.length > 1 ? "grab" : "default",
+          userSelect: "none",
+          minHeight: 0,
+        }}
+      >
         <AnimatePresence mode="wait">
           {current?.photo ? (
             <motion.img
               key={current.id}
               src={current.photo}
-              initial={{ opacity: 0, scale: 0.95 }}
+              draggable={false}
+              initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
               alt=""
-              style={{ maxHeight: 130, maxWidth: "100%", objectFit: "contain" }}
+              style={{ maxHeight: "100%", maxWidth: "100%", objectFit: "contain" }}
             />
           ) : (
             <motion.div
               key="empty"
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="font-condensed"
-              style={{
-                fontSize: "0.55rem",
-                letterSpacing: "0.22em",
-                color: "var(--t-subtext)",
-                textTransform: "uppercase",
-              }}
+              animate={{ opacity: 0.15 }}
+              className="flex items-center justify-center"
             >
-              {items.length === 0 ? "Add templates in CMS" : "Select an option below"}
+              <Shirt size={68} color="#fff" />
             </motion.div>
           )}
         </AnimatePresence>
+        {items.length > 1 && (
+          <>
+            <button
+              onClick={() => cycle(-1)}
+              style={arrowStyle("left")}
+              aria-label="Previous"
+            >
+              <ChevronLeft size={14} color="#fff" />
+            </button>
+            <button
+              onClick={() => cycle(1)}
+              style={arrowStyle("right")}
+              aria-label="Next"
+            >
+              <ChevronRight size={14} color="#fff" />
+            </button>
+          </>
+        )}
       </div>
-      <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
-        {items.slice(0, 6).map((it) => {
-          const isSel = selected === it.photo;
+
+      {/* thumbnail row 52px */}
+      <div
+        style={{
+          height: 52,
+          padding: "0 12px",
+          display: "flex",
+          gap: 6,
+          alignItems: "center",
+          overflowX: "auto",
+        }}
+      >
+        {items.map((it, i) => {
+          const isSel = i === index;
           return (
-            <motion.button
+            <button
               key={it.id}
-              onClick={() => onSelect(it.photo)}
-              animate={{ scale: isSel ? 1.08 : 1 }}
-              transition={{ type: "spring", stiffness: 320, damping: 20 }}
+              onClick={() => setIndex(i)}
               style={{
-                width: 52,
-                height: 64,
-                borderRadius: 4,
+                width: 48,
+                height: 44,
+                flexShrink: 0,
+                borderRadius: 3,
                 overflow: "hidden",
-                border: isSel ? "2px solid var(--t-accent)" : "1px solid var(--t-border)",
-                background: "var(--t-surface)",
+                border: isSel
+                  ? "2px solid var(--t-accent)"
+                  : "1px solid rgba(255,255,255,0.12)",
+                background: "rgba(255,255,255,0.04)",
                 cursor: "pointer",
                 padding: 0,
               }}
@@ -521,36 +634,183 @@ function SelectorPanel({
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               )}
-            </motion.button>
+            </button>
           );
         })}
+        {items.length === 0 && (
+          <div
+            className="font-condensed"
+            style={{
+              fontSize: "0.5rem",
+              letterSpacing: "0.22em",
+              color: "rgba(255,255,255,0.45)",
+              textTransform: "uppercase",
+            }}
+          >
+            Add templates in CMS
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 }
 
-function Section({
-  title,
+function arrowStyle(side: "left" | "right"): React.CSSProperties {
+  return {
+    position: "absolute",
+    top: "50%",
+    [side]: 6,
+    transform: "translateY(-50%)",
+    width: 26,
+    height: 26,
+    borderRadius: 999,
+    background: "rgba(0,0,0,0.55)",
+    border: "1px solid rgba(255,255,255,0.18)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    zIndex: 3,
+  } as React.CSSProperties;
+}
+
+function MobileSelector({
+  emoji,
+  label,
   items,
-  selected,
-  onSelect,
+  index,
+  setIndex,
 }: {
-  title: string;
+  emoji: string;
+  label: string;
   items: MixTemplate[];
-  selected: string | null;
-  onSelect: (p: string | null) => void;
+  index: number;
+  setIndex: (i: number) => void;
 }) {
   return (
     <div
       style={{
+        background: "#0a0a0a",
         border: "1px solid var(--t-border)",
         borderRadius: 6,
-        padding: 10,
-        background: "var(--t-surface)",
+        overflow: "hidden",
+        minHeight: 240,
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      <SelectorPanel title={title} items={items} selected={selected} onSelect={onSelect} />
+      <SelectorSection
+        emoji={emoji}
+        label={label}
+        items={items}
+        index={index}
+        setIndex={setIndex}
+      />
     </div>
+  );
+}
+
+function ResultArea({
+  generatedResult,
+  defaultResult,
+  athlete,
+}: {
+  generatedResult: string | null;
+  defaultResult: string | null;
+  athlete: string | null;
+}) {
+  return (
+    <AnimatePresence mode="wait">
+      {generatedResult ? (
+        <motion.img
+          key="gen"
+          src={generatedResult}
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4 }}
+          alt=""
+          style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+        />
+      ) : defaultResult ? (
+        <motion.img
+          key="def"
+          src={defaultResult}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          alt=""
+          style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+        />
+      ) : athlete ? (
+        <motion.img
+          key="ath"
+          src={athlete}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.4 }}
+          exit={{ opacity: 0 }}
+          alt=""
+          style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+        />
+      ) : (
+        <motion.div
+          key="ph"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center font-condensed"
+          style={{
+            color: "var(--t-subtext)",
+            fontSize: "0.6rem",
+            letterSpacing: "0.22em",
+            textTransform: "uppercase",
+            padding: 20,
+          }}
+        >
+          <Shirt size={42} style={{ margin: "0 auto 10px" }} />
+          <div>Select jersey + shorts then generate</div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function GenerateButton({
+  onClick,
+  canGenerate,
+  generating,
+}: {
+  onClick: () => void;
+  canGenerate: boolean;
+  generating: boolean;
+}) {
+  const pulse = canGenerate && !generating;
+  return (
+    <motion.button
+      onClick={onClick}
+      disabled={!canGenerate || generating}
+      animate={pulse ? { scale: [1, 1.03, 1] } : { scale: 1 }}
+      transition={{ duration: 1.6, repeat: pulse ? Infinity : 0 }}
+      style={{
+        flex: 1,
+        background: canGenerate ? "var(--t-accent)" : "rgba(255,255,255,0.08)",
+        color: "#fff",
+        border: "1px solid var(--t-accent)",
+        padding: "10px 14px",
+        borderRadius: 6,
+        fontFamily: "'Bebas Neue', 'Barlow Condensed', sans-serif",
+        fontWeight: 700,
+        letterSpacing: "0.2em",
+        fontSize: "0.85rem",
+        opacity: canGenerate ? 1 : 0.4,
+        cursor: canGenerate && !generating ? "pointer" : "not-allowed",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+      }}
+    >
+      <Sparkles size={14} /> {generating ? "GENERATING…" : "GENERATE SET"}
+    </motion.button>
   );
 }
 
@@ -574,14 +834,15 @@ function SmallBtn({
         border: "1px solid var(--t-border)",
         background: "rgba(255,255,255,0.05)",
         color: "var(--t-text)",
-        fontSize: "0.6rem",
+        fontSize: "0.55rem",
         letterSpacing: "0.18em",
         textTransform: "uppercase",
         display: "flex",
         alignItems: "center",
-        gap: 5,
+        gap: 4,
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.5 : 1,
+        whiteSpace: "nowrap",
       }}
     >
       {children}

@@ -236,6 +236,81 @@ export type Database = {
           },
         ]
       }
+      mix_match_defaults: {
+        Row: {
+          jersey_id: string
+          result_photo: string
+          shorts_id: string
+          updated_at: string
+        }
+        Insert: {
+          jersey_id: string
+          result_photo: string
+          shorts_id: string
+          updated_at?: string
+        }
+        Update: {
+          jersey_id?: string
+          result_photo?: string
+          shorts_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mix_match_defaults_jersey_id_fkey"
+            columns: ["jersey_id"]
+            isOneToOne: false
+            referencedRelation: "mix_match_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mix_match_defaults_shorts_id_fkey"
+            columns: ["shorts_id"]
+            isOneToOne: false
+            referencedRelation: "mix_match_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mix_match_results: {
+        Row: {
+          created_at: string
+          id: string
+          jersey_id: string
+          result_photo: string
+          shorts_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          jersey_id: string
+          result_photo: string
+          shorts_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          jersey_id?: string
+          result_photo?: string
+          shorts_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mix_match_results_jersey_id_fkey"
+            columns: ["jersey_id"]
+            isOneToOne: false
+            referencedRelation: "mix_match_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mix_match_results_shorts_id_fkey"
+            columns: ["shorts_id"]
+            isOneToOne: false
+            referencedRelation: "mix_match_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mix_match_templates: {
         Row: {
           athlete_template: string | null
