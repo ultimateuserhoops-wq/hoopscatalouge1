@@ -236,6 +236,36 @@ export type Database = {
           },
         ]
       }
+      mix_match_templates: {
+        Row: {
+          athlete_template: string | null
+          created_at: string
+          id: string
+          photo: string | null
+          photo_name: string | null
+          sort_order: number
+          type: string
+        }
+        Insert: {
+          athlete_template?: string | null
+          created_at?: string
+          id?: string
+          photo?: string | null
+          photo_name?: string | null
+          sort_order?: number
+          type: string
+        }
+        Update: {
+          athlete_template?: string | null
+          created_at?: string
+          id?: string
+          photo?: string | null
+          photo_name?: string | null
+          sort_order?: number
+          type?: string
+        }
+        Relationships: []
+      }
       product_tiers: {
         Row: {
           created_at: string

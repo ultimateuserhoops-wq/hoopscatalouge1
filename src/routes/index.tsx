@@ -10,6 +10,7 @@ import { MenuSpread } from "@/components/catalog/spreads/MenuSpread";
 import { SizeSpread } from "@/components/catalog/spreads/SizeSpread";
 import { ContactSpread } from "@/components/catalog/spreads/ContactSpread";
 import { GallerySpread } from "@/components/catalog/spreads/GallerySpread";
+import { MixMatchSpread } from "@/components/catalog/spreads/MixMatchSpread";
 import { useSpreads } from "@/hooks/useSpreads";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
@@ -116,6 +117,8 @@ function CatalogPage() {
         return <ContactSpread />;
       case "gallery":
         return <GallerySpread spread={currentSpread} isAdmin={isAuthed} />;
+      case "mixmatch":
+        return <MixMatchSpread isAdmin={isAuthed} />;
       case "product":
         if (cat.loading || !cat.product) {
           return (
