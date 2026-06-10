@@ -11,6 +11,7 @@ import { notify } from "@/lib/toast";
 import { MENU_PAGES, type SpreadDef } from "@/lib/catalog-spreads";
 import { CMSPanel } from "./CMSPanel";
 import { GallerySpread } from "./spreads/GallerySpread";
+import { MixMatchSpread } from "./spreads/MixMatchSpread";
 
 type CatalogCtx = {
   product: Product | null;
@@ -151,6 +152,10 @@ export function MobileCatalog({ spreadIndex, setSpreadIndex, cat, isAdmin, cmsOp
       ) : current.type === "gallery" ? (
         <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
           <GallerySpread spread={current} isAdmin={isAdmin} full />
+        </div>
+      ) : current.type === "mixmatch" ? (
+        <div style={{ flex: 1, overflow: "auto" }}>
+          <MixMatchSpread isAdmin={isAdmin} full />
         </div>
       ) : (
         <div style={{ flex: 1, overflow: "auto", touchAction: "pan-y" }} {...nonProductSwipe}>

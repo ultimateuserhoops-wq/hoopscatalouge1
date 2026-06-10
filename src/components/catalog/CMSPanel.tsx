@@ -4,6 +4,7 @@ import type { CatalogTheme, ColorVariant, Product, ProductTier, SpecRow, Templat
 import type { SpreadDef } from "@/lib/catalog-spreads";
 import { UploadSlot } from "./UploadSlot";
 import { GalleryEditor } from "./GalleryEditor";
+import { MixMatchCMS } from "./spreads/MixMatchSpread";
 import { buildColorVariationPrompt, buildJerseyDisplayPrompt, callGemini, callGeminiTwoImages, downloadImageHD, getAIErrorMessage, loadGeminiKeyFromDb, readFileAsDataURL, resizeImage, saveGeminiKeyToDb } from "@/lib/gemini";
 
 import { notify } from "@/lib/toast";
@@ -11,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTemplateSet } from "@/hooks/useTemplateSet";
 import { useNavigate } from "@tanstack/react-router";
 
-type Tab = "theme" | "pages" | "info" | "colors" | "specs" | "page" | "gallery" | "tiers";
+type Tab = "theme" | "pages" | "info" | "colors" | "specs" | "page" | "gallery" | "tiers" | "mixmatch";
 
 interface Props {
   open: boolean;
@@ -48,10 +49,12 @@ export function CMSPanel(p: Props) {
   useEffect(() => { if (p.open) loadGeminiKeyFromDb().then((k) => setKeyInput(k || "")); }, [p.open]);
 
   const isGallery = p.currentSpread?.type === "gallery";
+  const isMixMatch = p.currentSpread?.type === "mixmatch";
   const isJersey = (p.product?.category || "").toUpperCase() === "JERSEYS";
   useEffect(() => {
     if (p.open && isGallery) setTab("gallery");
-  }, [p.open, isGallery, p.currentSpread?.id]);
+    if (p.open && isMixMatch) setTab("mixmatch");
+  }, [p.open, isGallery, isMixMatch, p.currentSpread?.id]);
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -77,12 +80,14 @@ export function CMSPanel(p: Props) {
       <div className="flex border-b border-white/10 text-[0.6rem] font-condensed tracking-widest">
         {((isGallery
           ? ["theme","pages","gallery"]
+          : isMixMatch
+            ? ["theme","pages","mixmatch"]
           : isJersey
             ? ["theme","pages","info","colors","tiers","specs","page"]
             : ["theme","pages","info","colors","specs","page"]) as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`flex-1 py-2 px-1 uppercase ${tab===t?"bg-white/10 text-white":"text-white/50 hover:text-white"}`}>
-            {t}
+            {t === "mixmatch" ? "🔀 Mix" : t}
           </button>
         ))}
       </div>
@@ -122,6 +127,7 @@ export function CMSPanel(p: Props) {
         {tab === "gallery" && (isGallery && p.currentSpread
           ? <GalleryEditor spreadId={p.currentSpread.id} spreadTitle={p.currentSpread.label || p.currentSpread.title} />
           : <div className="text-[0.65rem] text-white/40 font-condensed tracking-widest uppercase">Open a gallery spread to manage its photos.</div>)}
+        {tab === "mixmatch" && <MixMatchCMS />}
       </div>
     </div>
   );
