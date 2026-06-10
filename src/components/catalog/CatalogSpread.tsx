@@ -6,6 +6,7 @@ import { JerseySVG } from "./JerseySVG";
 import { hexToRgba, callGemini, getLeftPageBg, buildMatchBgPrompt, buildColorVariationPrompt, getAIErrorMessage, readFileAsDataURL, resizeImage, downloadImageHD, compositeOntoBackground, buildRemoveBgToSolidPrompt } from "@/lib/gemini";
 import { notify } from "@/lib/toast";
 import { ProductDisplayUpload } from "@/components/ProductDisplayUpload";
+import { ProductCutout } from "@/components/ProductCutout";
 import { useServerFn } from "@tanstack/react-start";
 import { generateVeoPrompt, startKieVideo, pollKieVideo } from "@/lib/kie-video.functions";
 
@@ -321,7 +322,7 @@ export function CatalogSpread(p: Props) {
                 <div style={{ position: "absolute", inset: 0 }}>
                   <ProductDisplayUpload colorId={p.activeColorId} slotType="jersey" isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
                     {activeColor?.jersey_photo
-                      ? <img loading="lazy" decoding="async" crossOrigin="anonymous" src={activeColor.jersey_photo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center bottom", mixBlendMode: "normal" }} />
+                      ? <ProductCutout src={activeColor.jersey_photo} envTint={leftPageBg} isAdmin={!!p.isAdmin} />
                       : activeColor && <JerseySVG hexMain={activeColor.hex_main} hexShade={activeColor.hex_shade || activeColor.hex_main} isLight={!!activeColor.is_light} category={product.category || undefined} />}
                   </ProductDisplayUpload>
                 </div>
@@ -330,7 +331,7 @@ export function CatalogSpread(p: Props) {
                 <div style={{ position: "absolute", inset: 0 }}>
                   <ProductDisplayUpload colorId={p.activeColorId} slotType="body" isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
                     {activeColor?.body_photo
-                      ? <img loading="lazy" decoding="async" crossOrigin="anonymous" src={activeColor.body_photo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center bottom", mixBlendMode: "normal" }} />
+                      ? <ProductCutout src={activeColor.body_photo} envTint={leftPageBg} isAdmin={!!p.isAdmin} />
                       : <div className="w-full h-full flex flex-col items-center justify-center text-center" style={{ color: "var(--t-subtext)" }}>
                           <div className="text-5xl">🧍</div>
                           <div className="text-[0.6rem] font-condensed tracking-widest mt-2">ON-BODY PHOTO</div>
