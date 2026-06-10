@@ -26,6 +26,7 @@ import {
   getLeftPageBg,
 } from "@/lib/gemini";
 import { notify } from "@/lib/toast";
+import { ProductCutout } from "@/components/ProductCutout";
 
 interface MixTemplate {
   id: string;
@@ -722,26 +723,26 @@ function ResultArea({
   return (
     <AnimatePresence mode="wait">
       {generatedResult ? (
-        <motion.img
+        <motion.div
           key="gen"
-          src={generatedResult}
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4 }}
-          alt=""
-          style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
-        />
+          style={{ width: "100%", height: "100%" }}
+        >
+          <ProductCutout src={generatedResult} fit="contain" position="center" />
+        </motion.div>
       ) : defaultResult ? (
-        <motion.img
+        <motion.div
           key="def"
-          src={defaultResult}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          alt=""
-          style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
-        />
+          style={{ width: "100%", height: "100%" }}
+        >
+          <ProductCutout src={defaultResult} fit="contain" position="center" />
+        </motion.div>
       ) : athlete ? (
         <motion.img
           key="ath"
