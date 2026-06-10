@@ -101,7 +101,8 @@ function sampleBackgrounds(data: Uint8ClampedArray, w: number, h: number): Array
   };
   const out: Array<[number, number, number]> = [];
   const a = avg(lower); if (a) out.push(a);
-  const b = avg(upper); if (b && (!a || colorDist(...a, ...b) > 12)) out.push(b);
+  const b = avg(upper);
+  if (b && (!a || colorDist(a[0], a[1], a[2], b[0], b[1], b[2]) > 12)) out.push(b);
   if (out.length === 0) out.push(avg(sorted)!);
   return out;
 }
@@ -168,16 +169,14 @@ export async function removeCheckerBackground(src: string, opts: RemoveOptions =
     for (let x = 0; x < w; x++) { enqueue(x, 0); enqueue(x, h - 1); }
     for (let y = 0; y < h; y++) { enqueue(0, y); enqueue(w - 1, y); }
 
-    while (queue.length) {
-      const idx = queue.shift()!;
+    let head = 0;
+    while (head < queue.length) {
+      const idx = queue[head++];
       const x = idx % w, y = (idx / w) | 0;
-      const neigh = [
-        [x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1],
-      ];
-      for (const [nx, ny] of neigh) {
-        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
-        enqueue(nx, ny);
-      }
+      if (x + 1 < w) enqueue(x + 1, y);
+      if (x - 1 >= 0) enqueue(x - 1, y);
+      if (y + 1 < h) enqueue(x, y + 1);
+      if (y - 1 >= 0) enqueue(x, y - 1);
     }
 
     // Feather pass: any opaque pixel adjacent to a transparent one gets
