@@ -17,7 +17,7 @@ import { notify } from "@/lib/toast";
 
 interface MixTemplate {
   id: string;
-  type: "jersey" | "shorts";
+  type: "jersey" | "shorts" | "athlete";
   photo: string | null;
   photo_name: string | null;
   athlete_template: string | null;
@@ -63,7 +63,7 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
       .from("mix_match_templates" as any)
       .select("*")
       .order("sort_order");
-    const rows = (data || []) as MixTemplate[];
+    const rows = ((data as unknown) || []) as MixTemplate[];
     setJerseys(rows.filter((r) => r.type === "jersey"));
     setShorts(rows.filter((r) => r.type === "shorts"));
     const a = rows.find((r) => r.type === "athlete" || r.athlete_template);
@@ -628,7 +628,7 @@ export function MixMatchCMS() {
       .from("mix_match_templates" as any)
       .select("*")
       .order("sort_order");
-    const rows = (data || []) as MixTemplate[];
+    const rows = ((data as unknown) || []) as MixTemplate[];
     setJerseys(rows.filter((r) => r.type === "jersey"));
     setShorts(rows.filter((r) => r.type === "shorts"));
     setAthlete(rows.find((r) => r.type === "athlete") || null);
