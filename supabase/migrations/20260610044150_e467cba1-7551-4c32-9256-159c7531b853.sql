@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "hoops images public read" ON storage.objects;
+CREATE POLICY "hoops images authenticated read" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'hoops-catalog-images');
