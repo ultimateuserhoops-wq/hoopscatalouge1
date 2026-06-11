@@ -334,7 +334,7 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
     <div
       className="catalog-themed relative"
       style={{
-        width: 880,
+        width: 1100,
         height: 570,
         perspective: 2000,
         transform: "rotateX(2deg)",
@@ -342,8 +342,8 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
       }}
     >
       <div
-        className="absolute inset-0 grid grid-cols-2"
-        style={{ borderRadius: 4, overflow: "hidden" }}
+        className="absolute inset-0 grid"
+        style={{ borderRadius: 4, overflow: "hidden", gridTemplateColumns: "660px 440px" }}
       >
         {/* LEFT page: 440×570, two selector sections */}
         <motion.div
