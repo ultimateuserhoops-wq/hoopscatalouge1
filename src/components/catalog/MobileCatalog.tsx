@@ -514,6 +514,24 @@ function MobileProductView(pp: ProductProps) {
 
       {/* Display area */}
       <div style={{ flex: 1, position: "relative", overflow: "hidden", touchAction: "pan-y", background: "var(--t-display-bg)" }} {...colorSwipe}>
+        {/* Color glow halo */}
+        <motion.div
+          animate={{ background: `radial-gradient(ellipse 55% 50% at 48% 52%, ${hexToRgba(liveColor?.hex_main ?? "#888", 0.22)} 0%, transparent 70%)` }}
+          transition={{ duration: 0.6, ease: "easeInOut" }}
+          style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 1 }}
+        />
+        {/* Ground shadow */}
+        <div style={{
+          position: "absolute",
+          bottom: 48,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "55%",
+          height: "18px",
+          background: "radial-gradient(ellipse at center, rgba(0,0,0,0.45) 0%, transparent 70%)",
+          pointerEvents: "none",
+          zIndex: 1,
+        }} />
         {/* Photo */}
         <motion.div
           className="product-view"
@@ -522,13 +540,19 @@ function MobileProductView(pp: ProductProps) {
           style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}
         >
           <ProductDisplayUpload colorId={liveColor?.id ?? null} slotType={displayMode} isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" custom={swipeDir}>
             <motion.div
               key={`mobile-media-${liveColor?.id}-${displayMode}`}
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -10 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
+              custom={swipeDir}
+              variants={{
+                enter: (d: number) => ({ opacity: 0, x: d * 20, scale: 0.97 }),
+                center: { opacity: 1, x: 0, scale: 1 },
+                exit: (d: number) => ({ opacity: 0, x: d * -20, scale: 0.97 }),
+              }}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.22, ease: "easeOut" }}
               style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
             >
               {photo ? (
