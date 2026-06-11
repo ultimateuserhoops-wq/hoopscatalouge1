@@ -690,16 +690,30 @@ function MobileProductView(pp: ProductProps) {
           { k: "theme", I: Paintbrush, l: "Theme" },
         ] as const).map(({ k, I, l }) => {
           const active = activeTab === k;
+          const isOrder = k === "order";
           return (
             <button key={k} onClick={() => setActiveTab(active ? null : k)} style={{
               flex: 1, height: 40, display: "flex", flexDirection: "column",
               alignItems: "center", justifyContent: "center", gap: 2,
-              background: "none", border: "none",
-              color: active ? "var(--t-accent)" : "var(--t-subtext)",
-              borderTop: `2px solid ${active ? "var(--t-accent)" : "transparent"}`,
+              background: isOrder && !active ? "rgba(255,77,0,0.08)" : "none",
+              border: "none", position: "relative",
+              color: active ? "var(--t-accent)" : isOrder ? "var(--t-accent)" : "var(--t-subtext)",
+              borderTop: `2px solid ${active ? "var(--t-accent)" : isOrder ? "rgba(255,77,0,0.3)" : "transparent"}`,
             }}>
               <I size={13} />
               <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.44rem", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase" }}>{l}</span>
+              {isOrder && liveColor && !active && (
+                <div style={{
+                  position: "absolute",
+                  top: 4,
+                  right: "calc(50% - 16px)",
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: liveColor.hex_main,
+                  border: "1px solid rgba(255,255,255,0.3)",
+                }} />
+              )}
             </button>
           );
         })}
