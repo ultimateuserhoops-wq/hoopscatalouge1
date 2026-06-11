@@ -43,24 +43,67 @@ interface Props {
   full?: boolean; // mobile mode
 }
 
-const GEN_PROMPT_FLAT = `You are a professional sportswear designer.
+const GEN_PROMPT = `You are a professional sportswear product visualizer. You have TWO source images to study carefully before generating anything.
 
-IMAGE 1: A flat jersey top (front view) showing colors, graphics, numbers, logos
-IMAGE 2: A flat shorts (front view) showing the cut, waistband, side stripes, hem style
+═══════════════════════════════════════════════════
+STUDY IMAGE 1 CAREFULLY — THIS IS THE JERSEY TOP
+═══════════════════════════════════════════════════
+Extract and memorize EVERY detail from the jersey in IMAGE 1:
+- Primary fabric color (hex approximation)
+- Secondary / trim / accent colors
+- Side panel colors and patterns
+- Collar style and color
+- All sublimation graphics, patterns, and prints on the body
+- Team name: exact text, font style, color, position on chest
+- Player number: exact number, size, fill color, outline color, chest and back position
+- All logos (brand logos, league badges) positions and colors
+- Sleeve edge trim color and width
+- Waistband/hem color on the bottom of the jersey
 
-YOUR TASK: Create a professional flat-lay product photo of a complete basketball set:
-- Jersey: exact colors, graphics, numbers, text, logos from IMAGE 1
-- Shorts: keep ONLY the cut / silhouette / length / waistband / hem shape from IMAGE 2. Re-skin the shorts so their SURFACE DESIGN matches IMAGE 1's jersey — same primary color, same trim colors, same prints / patterns / splatter / texture / graphic motifs, same team logo or wordmark, same side-panel treatment, same number style (use the jersey's number on the shorts leg). The shorts must visually read as part of the SAME uniform as the jersey, not a recolored generic short.
-- Both items displayed together as a flat-lay product set on a neutral/dark background
-- No model/person — flat product only.`;
+═══════════════════════════════════════════════════
+STUDY IMAGE 2 CAREFULLY — THIS IS THE SHORTS TEMPLATE
+═══════════════════════════════════════════════════
+Extract and memorize EVERY structural detail from the shorts in IMAGE 2:
+- The EXACT silhouette and cut of the shorts (do not change this)
+- Waistband HEIGHT and style (how tall it is, whether it has a drawstring visible)
+- Leg opening hem style (straight, curved, split, vented)
+- Side seam position and construction
+- Side panel or stripe shape and placement
+- Overall length of the shorts (mid-thigh, above knee, below knee)
+- Any graphic patterns on the shorts (copy these shapes but recolor them)
 
-const GEN_PROMPT_ATHLETE = `You are a professional sportswear photographer.
+═══════════════════════════════════════════════════
+YOUR TASK — GENERATE A COMPLETE ON-BODY ATHLETE PHOTO
+═══════════════════════════════════════════════════
 
-IMAGE 1: A flat jersey top (front view) — use its EXACT colors, graphics, numbers, text and logos.
-IMAGE 2: A flat shorts (front view) — use ONLY its cut, length, waistband and hem shape as the silhouette reference. Do NOT copy its colors, prints, or graphics.
-IMAGE 3: A photo of a basketball player (model). Keep the SAME person — same face, skin tone, hairstyle, body proportions, pose, shoes, and background lighting.
+Create a professional product photograph of an athlete wearing the complete basketball uniform:
 
-YOUR TASK: Dress the player in IMAGE 3 with the jersey from IMAGE 1 and matching shorts. The shorts must look like part of the SAME uniform as the jersey: re-skin IMAGE 2's silhouette so the surface design (primary color, trim colors, prints / patterns / splatter / texture, team logo or wordmark, side-panel treatment, and player number) is taken from IMAGE 1's jersey design — not from IMAGE 2's original colors. The jersey graphic, number, and text from IMAGE 1 must be clearly visible and undistorted on the player's chest, and the same design language must continue on the shorts. Keep the player's pose, face, skin, hair, shoes, and background unchanged. Produce a clean, high-quality full-body product photo of the player wearing the matching set.`;
+JERSEY ON ATHLETE:
+✅ Apply EXACT colors from IMAGE 1 jersey to the athlete's jersey
+✅ Reproduce ALL graphics, text, numbers, patterns from IMAGE 1 onto the jersey
+✅ Keep all design positions proportional to the athlete's body
+✅ Collar style matches IMAGE 1
+✅ Sleeve edges match IMAGE 1 trim
+
+SHORTS ON ATHLETE:
+✅ The shorts CUT AND SILHOUETTE must EXACTLY match IMAGE 2 — same length, same waistband height, same hem style, same side seam construction
+✅ Recolor the shorts to match the primary color of the IMAGE 1 jersey
+✅ Trim and accent areas of the shorts use the trim/accent colors from IMAGE 1
+✅ If IMAGE 2 shorts have graphic patterns, keep those PATTERN SHAPES but recolor them using IMAGE 1 jersey colors
+✅ The waistband height from IMAGE 2 must be preserved on the athlete
+
+ATHLETE:
+✅ Professional standing pose holding a basketball
+✅ Realistic product photography lighting
+✅ Clean neutral background
+✅ High quality, suitable for a product catalogue
+
+CRITICAL RULES:
+❌ DO NOT use jersey proportions for the shorts — the shorts shape comes ONLY from IMAGE 2
+❌ DO NOT change the shorts silhouette or cut — only recolor it
+❌ DO NOT omit any design elements from the jersey (IMAGE 1)
+❌ DO NOT make the shorts look like the jersey bottom — they are completely separate garments with different cuts
+❌ The waistband, hem, and leg opening style must all come from IMAGE 2, not from IMAGE 1`;
 
 function useSectionSwipe(onLeft: () => void, onRight: () => void) {
   const startX = useRef<number | null>(null);
@@ -143,18 +186,12 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
     }
     setGenerating(true);
     try {
-      const result = athlete
-        ? await callGeminiMultiImages(
-            [selectedJersey.photo, selectedShorts.photo, athlete],
-            GEN_PROMPT_ATHLETE,
-            1280
-          )
-        : await callGeminiTwoImages(
-            selectedJersey.photo,
-            selectedShorts.photo,
-            GEN_PROMPT_FLAT,
-            1280
-          );
+      const result = await callGeminiTwoImages(
+        selectedJersey.photo,
+        selectedShorts.photo,
+        GEN_PROMPT,
+        1536
+      );
       setGeneratedResult(result);
       notify("Set generated ✓");
     } catch (e) {
