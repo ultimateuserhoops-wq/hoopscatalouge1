@@ -511,7 +511,7 @@ function MobileProductView(pp: ProductProps) {
 
 
       {/* Display area */}
-      <div style={{ flex: 1, position: "relative", overflow: "hidden", touchAction: "pan-y" }} {...colorSwipe}>
+      <div style={{ flex: 1, position: "relative", overflow: "hidden", touchAction: "pan-y", background: "var(--t-display-bg)" }} {...colorSwipe}>
         {/* Photo */}
         <motion.div
           className="product-view"
