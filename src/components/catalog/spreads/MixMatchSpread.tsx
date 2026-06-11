@@ -639,16 +639,44 @@ function SelectorSection({
           );
         })}
         {items.length === 0 && (
-          <div
-            className="font-condensed"
-            style={{
-              fontSize: "0.5rem",
-              letterSpacing: "0.22em",
-              color: "rgba(255,255,255,0.45)",
+          <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "20px 0" }}>
+            <motion.div
+              animate={{ opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+              style={{
+                width: 64,
+                height: 80,
+                borderRadius: 6,
+                background: "linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.12) 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Shirt size={28} style={{ opacity: 0.3, color: "var(--t-accent)" }} />
+            </motion.div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "80%", alignItems: "center" }}>
+              <motion.div
+                animate={{ opacity: [0.2, 0.45, 0.2] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut", delay: 0.15 }}
+                style={{ height: 8, width: "70%", borderRadius: 4, background: "rgba(255,255,255,0.12)" }}
+              />
+              <motion.div
+                animate={{ opacity: [0.2, 0.35, 0.2] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+                style={{ height: 6, width: "50%", borderRadius: 4, background: "rgba(255,255,255,0.08)" }}
+              />
+            </div>
+            <div style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontSize: "0.55rem",
+              letterSpacing: "0.2em",
+              color: "var(--t-accent)",
               textTransform: "uppercase",
-            }}
-          >
-            Add templates in CMS
+              opacity: 0.7,
+            }}>
+              Upload templates in CMS
+            </div>
           </div>
         )}
       </div>

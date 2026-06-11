@@ -167,14 +167,28 @@ export function MobileCatalog({ spreadIndex, setSpreadIndex, cat, isAdmin, cmsOp
       )}
 
 
-      {/* Footer page counter */}
+      {/* Footer — progress bar + page counter */}
       <div style={{
-        flexShrink: 0, padding: "2px 12px", background: "var(--t-surface)", borderTop: "1px solid var(--t-border)",
-        textAlign: "center", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.5rem",
-        letterSpacing: "0.25em", color: "var(--t-subtext)", textTransform: "uppercase",
-        paddingBottom: "calc(2px + env(safe-area-inset-bottom, 0px))",
+        flexShrink: 0, padding: "3px 12px", background: "var(--t-surface)", borderTop: "1px solid var(--t-border)",
+        paddingBottom: "calc(3px + env(safe-area-inset-bottom, 0px))",
       }}>
-        Page {String(current.pageLeft).padStart(2, "0")}–{String(current.pageRight).padStart(2, "0")} of {totalPages}
+        <div style={{ height: 2, background: "var(--t-border)", borderRadius: 1, marginBottom: 3, overflow: "hidden" }}>
+          <motion.div
+            animate={{ width: `${((spreadIndex + 1) / spreads.length) * 100}%` }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            style={{ height: "100%", background: "var(--t-accent)", borderRadius: 1 }}
+          />
+        </div>
+        <div style={{
+          textAlign: "center",
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontSize: "0.5rem",
+          letterSpacing: "0.25em",
+          color: "var(--t-subtext)",
+          textTransform: "uppercase",
+        }}>
+          Page {String(current.pageLeft).padStart(2, "0")}–{String(current.pageRight).padStart(2, "0")} of {totalPages}
+        </div>
       </div>
 
       {isAdmin && (
@@ -391,6 +405,7 @@ function MobileProductView(pp: ProductProps) {
   const [aiBusy, setAiBusy] = useState<string | null>(null);
   const [genId, setGenId] = useState<string | null>(null);
   const [customPreview, setCustomPreview] = useState<ColorVariant | null>(null);
+  const [swipeDir, setSwipeDir] = useState<1 | -1>(1);
 
 
   const sortedColors = useMemo(() => [...colorVariants].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)), [colorVariants]);
@@ -479,6 +494,7 @@ function MobileProductView(pp: ProductProps) {
   const photo = currentPhoto;
 
   function handleSwipe(direction: "left" | "right") {
+    setSwipeDir(direction === "left" ? 1 : -1);
     if (sortedColors.length < 2) return;
     const currentId = customPreview ? null : p.activeColorId;
     const idx = sortedColors.findIndex((c) => c.id === currentId);
@@ -512,6 +528,24 @@ function MobileProductView(pp: ProductProps) {
 
       {/* Display area */}
       <div style={{ flex: 1, position: "relative", overflow: "hidden", touchAction: "pan-y", background: "var(--t-display-bg)" }} {...colorSwipe}>
+        {/* Color glow halo */}
+        <motion.div
+          animate={{ background: `radial-gradient(ellipse 55% 50% at 48% 52%, ${hexToRgba(liveColor?.hex_main ?? "#888", 0.22)} 0%, transparent 70%)` }}
+          transition={{ duration: 0.6, ease: "easeInOut" }}
+          style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 1 }}
+        />
+        {/* Ground shadow */}
+        <div style={{
+          position: "absolute",
+          bottom: 48,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "55%",
+          height: "18px",
+          background: "radial-gradient(ellipse at center, rgba(0,0,0,0.45) 0%, transparent 70%)",
+          pointerEvents: "none",
+          zIndex: 1,
+        }} />
         {/* Photo */}
         <motion.div
           className="product-view"
@@ -520,13 +554,19 @@ function MobileProductView(pp: ProductProps) {
           style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}
         >
           <ProductDisplayUpload colorId={liveColor?.id ?? null} slotType={displayMode} isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" custom={swipeDir}>
             <motion.div
               key={`mobile-media-${liveColor?.id}-${displayMode}`}
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -10 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
+              custom={swipeDir}
+              variants={{
+                enter: (d: number) => ({ opacity: 0, x: d * 20, scale: 0.97 }),
+                center: { opacity: 1, x: 0, scale: 1 },
+                exit: (d: number) => ({ opacity: 0, x: d * -20, scale: 0.97 }),
+              }}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.22, ease: "easeOut" }}
               style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
             >
               {photo ? (
@@ -631,7 +671,7 @@ function MobileProductView(pp: ProductProps) {
       {/* Color grid */}
       <div style={{ padding: "4px 10px", background: "var(--t-surface)", borderTop: "1px solid var(--t-border)", flexShrink: 0 }}>
         <div className="mobile-color-grid" style={{
-          display: "flex", gap: 5, overflowX: "auto", overflowY: "visible", paddingBottom: 2,
+          display: "flex", gap: 5, overflowX: "auto", overflowY: "visible", paddingBottom: 20,
           scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
         }}>
           {sortedColors.map((c) => {
@@ -664,16 +704,30 @@ function MobileProductView(pp: ProductProps) {
           { k: "theme", I: Paintbrush, l: "Theme" },
         ] as const).map(({ k, I, l }) => {
           const active = activeTab === k;
+          const isOrder = k === "order";
           return (
             <button key={k} onClick={() => setActiveTab(active ? null : k)} style={{
               flex: 1, height: 40, display: "flex", flexDirection: "column",
               alignItems: "center", justifyContent: "center", gap: 2,
-              background: "none", border: "none",
-              color: active ? "var(--t-accent)" : "var(--t-subtext)",
-              borderTop: `2px solid ${active ? "var(--t-accent)" : "transparent"}`,
+              background: isOrder && !active ? "rgba(255,77,0,0.08)" : "none",
+              border: "none", position: "relative",
+              color: active ? "var(--t-accent)" : isOrder ? "var(--t-accent)" : "var(--t-subtext)",
+              borderTop: `2px solid ${active ? "var(--t-accent)" : isOrder ? "rgba(255,77,0,0.3)" : "transparent"}`,
             }}>
               <I size={13} />
               <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.44rem", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase" }}>{l}</span>
+              {isOrder && liveColor && !active && (
+                <div style={{
+                  position: "absolute",
+                  top: 4,
+                  right: "calc(50% - 16px)",
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: liveColor.hex_main,
+                  border: "1px solid rgba(255,255,255,0.3)",
+                }} />
+              )}
             </button>
           );
         })}
@@ -789,7 +843,7 @@ function MobileColorCard({ color, isActive, onClick, canGenerate, hasPhoto, onGe
       onClick={onClick}
       animate={{ scale: isActive ? 1.08 : 1 }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
-      style={{ position: "relative", overflow: "visible", flexShrink: 0, width: 46, height: 46 }}
+      style={{ position: "relative", overflow: "visible", flexShrink: 0, width: 54, height: 54 }}
     >
       <div style={{
         position: "absolute", inset: 0, overflow: "hidden", borderRadius: 4,
@@ -819,6 +873,31 @@ function MobileColorCard({ color, isActive, onClick, canGenerate, hasPhoto, onGe
         <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.7)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 20 }}>
           <Loader2 size={14} className="animate-spin" color="#fff" />
         </div>
+      )}
+      {isActive && (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            position: "absolute",
+            top: "calc(100% + 3px)",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "var(--t-accent)",
+            color: "#000",
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: "0.42rem",
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            padding: "2px 5px",
+            whiteSpace: "nowrap",
+            zIndex: 40,
+            pointerEvents: "none",
+          }}
+        >
+          {color.name}
+        </motion.div>
       )}
     </motion.div>
   );
