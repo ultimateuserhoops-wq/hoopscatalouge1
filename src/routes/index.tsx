@@ -70,13 +70,14 @@ function CatalogPage() {
 
   useEffect(() => {
     function updateScale() {
-      const scale = Math.min((window.innerWidth * 0.98) / 880, (window.innerHeight * 0.92) / 570);
+      const spreadWidth = currentSpread?.type === "mixmatch" ? 1100 : 880;
+      const scale = Math.min((window.innerWidth * 0.98) / spreadWidth, (window.innerHeight * 0.92) / 570);
       document.documentElement.style.setProperty("--catalog-scale", String(scale));
     }
     updateScale();
     window.addEventListener("resize", updateScale);
     return () => window.removeEventListener("resize", updateScale);
-  }, []);
+  }, [currentSpread?.type]);
 
   // Keyboard navigation
   useEffect(() => {
