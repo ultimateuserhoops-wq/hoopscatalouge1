@@ -16,6 +16,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import {
   callGeminiTwoImages,
+  callGeminiMultiImages,
   readFileAsDataURL,
   resizeImage,
   compositeOntoBackground,
@@ -42,20 +43,24 @@ interface Props {
   full?: boolean; // mobile mode
 }
 
-const GEN_PROMPT = `You are a professional sportswear designer.
+const GEN_PROMPT_FLAT = `You are a professional sportswear designer.
 
 IMAGE 1: A flat jersey top (front view) showing colors, graphics, numbers, logos
 IMAGE 2: A flat shorts (front view) showing the cut, waistband, side stripes, hem style
 
 YOUR TASK: Create a professional flat-lay product photo of a complete basketball set:
 - Jersey: exact colors, graphics, numbers, text, logos from IMAGE 1
-- Shorts: exact cut/silhouette/hem/waistband style from IMAGE 2, but recolored to match the jersey's primary color and trim colors from IMAGE 1
+- Shorts: exact cut/silhouette/hem/waistband style from IMAGE 2, recolored to match the jersey's primary and trim colors from IMAGE 1
 - Both items displayed together as a flat-lay product set on a neutral/dark background
-- High quality, professional product photography style
-- No model/person — flat product only
+- No model/person — flat product only.`;
 
-The shorts STYLE (shape, cut, length, waistband height, side stripe position) comes from IMAGE 2.
-The shorts COLORS come from IMAGE 1 jersey colors.`;
+const GEN_PROMPT_ATHLETE = `You are a professional sportswear photographer.
+
+IMAGE 1: A flat jersey top (front view) — use its EXACT colors, graphics, numbers, text and logos.
+IMAGE 2: A flat shorts (front view) — use its EXACT cut, length, waistband and side-stripe style, recolored to match IMAGE 1's jersey palette.
+IMAGE 3: A photo of a basketball player (model). Keep the SAME person — same face, skin tone, hairstyle, body proportions, pose, shoes, and background lighting.
+
+YOUR TASK: Dress the player in IMAGE 3 with the jersey from IMAGE 1 and matching shorts based on IMAGE 2. The jersey graphic, number, and text from IMAGE 1 must be clearly visible and undistorted on the player's chest. Keep the player's pose, face, shoes, and background unchanged. Produce a clean, high-quality full-body product photo of the player wearing the complete set.`;
 
 function useSectionSwipe(onLeft: () => void, onRight: () => void) {
   const startX = useRef<number | null>(null);
@@ -138,12 +143,18 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
     }
     setGenerating(true);
     try {
-      const result = await callGeminiTwoImages(
-        selectedJersey.photo,
-        selectedShorts.photo,
-        GEN_PROMPT,
-        1280
-      );
+      const result = athlete
+        ? await callGeminiMultiImages(
+            [selectedJersey.photo, selectedShorts.photo, athlete],
+            GEN_PROMPT_ATHLETE,
+            1280
+          )
+        : await callGeminiTwoImages(
+            selectedJersey.photo,
+            selectedShorts.photo,
+            GEN_PROMPT_FLAT,
+            1280
+          );
       setGeneratedResult(result);
       notify("Set generated ✓");
     } catch (e) {
