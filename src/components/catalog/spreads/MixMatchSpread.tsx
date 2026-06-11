@@ -317,7 +317,7 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
           style={{
             background: "#0a0a0a",
             display: "flex",
-            flexDirection: "column",
+            flexDirection: "row",
             color: "#fff",
           }}
         >
@@ -334,19 +334,19 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
             }}
           />
           <SelectorSection
-            emoji="👕"
-            label="SELECT JERSEY"
-            items={jerseys}
-            index={jerseyIndex}
-            setIndex={setJerseyIndex}
-          />
-          <div style={{ height: 1, background: "rgba(255,255,255,0.08)" }} />
-          <SelectorSection
             emoji="🩳"
             label="SELECT SHORTS"
             items={shorts}
             index={shortsIndex}
             setIndex={setShortsIndex}
+          />
+          <div style={{ width: 1, background: "rgba(255,255,255,0.08)" }} />
+          <SelectorSection
+            emoji="👕"
+            label="SELECT JERSEY"
+            items={jerseys}
+            index={jerseyIndex}
+            setIndex={setJerseyIndex}
           />
         </motion.div>
 
