@@ -43,7 +43,7 @@ interface Props {
   full?: boolean; // mobile mode
 }
 
-const GEN_PROMPT = `Generate a professional on-body basketball uniform product photo of an athlete holding a ball on a clean neutral background.
+const GEN_PROMPT = `Dress the EXACT athlete from IMAGE 3 in a new basketball uniform. Keep him on a clean neutral background.
 
 IMAGE 1 = JERSEY DESIGN SOURCE:
 - Put this jersey design on the athlete's top.
@@ -53,11 +53,17 @@ IMAGE 2 = SHORTS CUT / STYLE SOURCE:
 - Shorts silhouette, length, waistband height, hem, leg opening, side seams, side panels, and construction come ONLY from IMAGE 2.
 - Keep IMAGE 2's shorts pattern shapes and panel layout, but recolor them using IMAGE 1's jersey palette.
 
+IMAGE 3 = THE ATHLETE (IDENTITY LOCK):
+- Use the SAME person from IMAGE 3: same face, same skin tone, same hair, same body type, same height, same pose, same hands, same shoes.
+- Do NOT change his appearance, age, ethnicity, facial features, or physique in any way.
+- Only his jersey and shorts change — everything else about the person stays identical to IMAGE 3.
+
 HARD RULES:
+- Do NOT generate a different person. The athlete must be recognizably the same as IMAGE 3.
 - Do NOT use jersey proportions for the shorts.
 - Do NOT change the shorts cut, waistband, hem, or leg opening from IMAGE 2.
 - Do NOT make the shorts look like the jersey bottom.
-- Top design = IMAGE 1. Shorts structure = IMAGE 2. Shorts colors = IMAGE 1 palette.`;
+- Person = IMAGE 3. Top design = IMAGE 1. Shorts structure = IMAGE 2. Shorts colors = IMAGE 1 palette.`;
 
 function useSectionSwipe(onLeft: () => void, onRight: () => void) {
   const startX = useRef<number | null>(null);
@@ -140,12 +146,9 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
     }
     setGenerating(true);
     try {
-      const result = await callGeminiTwoImages(
-        selectedJersey.photo,
-        selectedShorts.photo,
-        GEN_PROMPT,
-        1024
-      );
+      const images = [selectedJersey.photo, selectedShorts.photo];
+      if (athlete) images.push(athlete);
+      const result = await callGeminiMultiImages(images, GEN_PROMPT, 1024);
       setGeneratedResult(result);
       notify("Set generated ✓");
     } catch (e) {
