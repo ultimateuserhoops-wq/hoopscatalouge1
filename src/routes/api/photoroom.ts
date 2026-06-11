@@ -7,6 +7,18 @@ const CORS = {
   "Access-Control-Allow-Headers": "Content-Type",
 } as const;
 
+const PHOTOROOM_TIMEOUT_MS = 22_000;
+
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PHOTOROOM_TIMEOUT_MS);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -71,7 +83,7 @@ export const Route = createFileRoute("/api/photoroom")({
           const fd = new FormData();
           fd.append("image_file", imgBlob, "input.png");
           fd.append("format", "png");
-          const pr = await fetch("https://sdk.photoroom.com/v1/segment", {
+          const pr = await fetchWithTimeout("https://sdk.photoroom.com/v1/segment", {
             method: "POST",
             headers: { "x-api-key": apiKey, Accept: "image/png, application/json" },
             body: fd,
