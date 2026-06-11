@@ -843,7 +843,7 @@ function MobileColorCard({ color, isActive, onClick, canGenerate, hasPhoto, onGe
       onClick={onClick}
       animate={{ scale: isActive ? 1.08 : 1 }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
-      style={{ position: "relative", overflow: "visible", flexShrink: 0, width: 46, height: 46 }}
+      style={{ position: "relative", overflow: "visible", flexShrink: 0, width: 54, height: 54 }}
     >
       <div style={{
         position: "absolute", inset: 0, overflow: "hidden", borderRadius: 4,
@@ -873,6 +873,31 @@ function MobileColorCard({ color, isActive, onClick, canGenerate, hasPhoto, onGe
         <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.7)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 20 }}>
           <Loader2 size={14} className="animate-spin" color="#fff" />
         </div>
+      )}
+      {isActive && (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            position: "absolute",
+            top: "calc(100% + 3px)",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "var(--t-accent)",
+            color: "#000",
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontSize: "0.42rem",
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            padding: "2px 5px",
+            whiteSpace: "nowrap",
+            zIndex: 40,
+            pointerEvents: "none",
+          }}
+        >
+          {color.name}
+        </motion.div>
       )}
     </motion.div>
   );
