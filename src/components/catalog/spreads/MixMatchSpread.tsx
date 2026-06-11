@@ -388,10 +388,9 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
             </div>
           </div>
 
-          {/* Result area (32 → 416 = 384px) — same height as selector preview area, bottom-aligned */}
           <div
             style={{
-              height: 384,
+              height: 416,
               position: "relative",
               display: "flex",
               alignItems: "flex-end",
@@ -411,10 +410,9 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
             )}
           </div>
 
-          {/* Action bar 54px — matches selector thumbnail strip (52px) for alignment */}
           <div
             style={{
-              height: 54,
+              height: 52,
               padding: "0 14px",
               display: "flex",
               alignItems: "center",
