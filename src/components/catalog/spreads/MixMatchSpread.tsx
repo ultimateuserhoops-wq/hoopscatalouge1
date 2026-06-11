@@ -291,8 +291,8 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
     <div
       className="catalog-themed relative"
       style={{
-        width: 1100,
-        height: 570,
+        width: 1320,
+        height: 500,
         perspective: 2000,
         transform: "rotateX(2deg)",
         filter: "drop-shadow(0 30px 70px rgba(0,0,0,0.9))",
@@ -300,9 +300,9 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
     >
       <div
         className="absolute inset-0 grid"
-        style={{ borderRadius: 4, overflow: "hidden", gridTemplateColumns: "660px 440px" }}
+        style={{ borderRadius: 4, overflow: "hidden", gridTemplateColumns: "440px 440px 440px" }}
       >
-        {/* LEFT page: 440×570, two selector sections */}
+        {/* LEFT page: 880×500, two selector sections (shorts + jersey) */}
         <motion.div
           initial={{ x: -40, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -313,6 +313,7 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
             display: "flex",
             flexDirection: "row",
             color: "#fff",
+            gridColumn: "1 / span 2",
           }}
         >
           {/* accent bar */}
@@ -344,7 +345,7 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
           />
         </motion.div>
 
-        {/* RIGHT page: 440×570, result */}
+        {/* RIGHT page: 440×500, result */}
         <motion.div
           initial={{ x: 40, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -357,10 +358,10 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
             color: "var(--t-text)",
           }}
         >
-          {/* Top bar 44px */}
+          {/* Top bar 32px — matches selector label strip for alignment */}
           <div
             style={{
-              height: 44,
+              height: 32,
               padding: "0 16px",
               display: "flex",
               alignItems: "center",
@@ -370,7 +371,7 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
           >
             <div
               className="font-display"
-              style={{ fontSize: "1.1rem", letterSpacing: "0.08em" }}
+              style={{ fontSize: "0.85rem", letterSpacing: "0.1em" }}
             >
               BUILD YOUR SET
             </div>
@@ -380,23 +381,23 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
                 color: "var(--t-accent)",
                 fontWeight: 700,
                 letterSpacing: "0.18em",
-                fontSize: "0.7rem",
+                fontSize: "0.6rem",
               }}
             >
               HOOPS.
             </div>
           </div>
 
-          {/* Result area (44 → 480 = 436px) */}
           <div
             style={{
-              height: 436,
+              height: 416,
               position: "relative",
               display: "flex",
-              alignItems: "center",
+              alignItems: "flex-end",
               justifyContent: "center",
               overflow: "hidden",
               background: "var(--t-bg)",
+              padding: 8,
             }}
           >
             <ResultArea
@@ -409,14 +410,14 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
             )}
           </div>
 
-          {/* Action bar (480 → 540 = 60px) */}
           <div
             style={{
-              height: 60,
+              height: 52,
               padding: "0 14px",
               display: "flex",
               alignItems: "center",
               gap: 6,
+              borderTop: "1px solid var(--t-border)",
             }}
           >
             <GenerateButton
@@ -451,30 +452,6 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
                 <Download size={11} /> HD
               </SmallBtn>
             )}
-          </div>
-
-          {/* Info strip (540 → 570 = 30px) */}
-          <div
-            className="font-condensed"
-            style={{
-              height: 30,
-              padding: "0 16px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              fontSize: "0.55rem",
-              letterSpacing: "0.22em",
-              color: "var(--t-subtext)",
-              textTransform: "uppercase",
-              borderTop: "1px solid var(--t-border)",
-            }}
-          >
-            <span>
-              {selectedJersey?.photo_name || selectedJersey?.id?.slice(0, 6) || "—"}
-              {"  ×  "}
-              {selectedShorts?.photo_name || selectedShorts?.id?.slice(0, 6) || "—"}
-            </span>
-            <span>p.06–07</span>
           </div>
         </motion.div>
       </div>
@@ -550,7 +527,7 @@ function SelectorSection({
           flex: 1,
           position: "relative",
           display: "flex",
-          alignItems: "center",
+          alignItems: "flex-end",
           justifyContent: "center",
           padding: 8,
           cursor: items.length > 1 ? "grab" : "default",
@@ -569,7 +546,7 @@ function SelectorSection({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
               alt=""
-              style={{ maxHeight: "100%", maxWidth: "100%", objectFit: "contain" }}
+              style={{ maxHeight: "100%", maxWidth: "100%", objectFit: "contain", objectPosition: "bottom" }}
             />
           ) : (
             <motion.div

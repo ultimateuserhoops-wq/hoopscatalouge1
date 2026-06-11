@@ -70,8 +70,10 @@ function CatalogPage() {
 
   useEffect(() => {
     function updateScale() {
-      const spreadWidth = currentSpread?.type === "mixmatch" ? 1100 : 880;
-      const scale = Math.min((window.innerWidth * 0.98) / spreadWidth, (window.innerHeight * 0.92) / 570);
+      const isMix = currentSpread?.type === "mixmatch";
+      const spreadWidth = isMix ? 1320 : 880;
+      const spreadHeight = isMix ? 500 : 570;
+      const scale = Math.min((window.innerWidth * 0.98) / spreadWidth, (window.innerHeight * 0.92) / spreadHeight);
       document.documentElement.style.setProperty("--catalog-scale", String(scale));
     }
     updateScale();
