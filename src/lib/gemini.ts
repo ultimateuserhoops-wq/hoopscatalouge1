@@ -115,6 +115,14 @@ export async function callGeminiTwoImages(
   return callGeminiImages([sourceImageDataUrl, templateImageDataUrl], promptText, maxSide);
 }
 
+export async function callGeminiMultiImages(
+  imageDataUrls: string[],
+  promptText: string,
+  maxSide = 1024
+): Promise<string> {
+  return callGeminiImages(imageDataUrls, promptText, maxSide);
+}
+
 async function callGeminiImages(imageDataUrls: string[], promptText: string, maxSide = 1024): Promise<string> {
 
   const key = getGeminiKey();
