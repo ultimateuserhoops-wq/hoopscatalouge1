@@ -391,6 +391,7 @@ function MobileProductView(pp: ProductProps) {
   const [aiBusy, setAiBusy] = useState<string | null>(null);
   const [genId, setGenId] = useState<string | null>(null);
   const [customPreview, setCustomPreview] = useState<ColorVariant | null>(null);
+  const [swipeDir, setSwipeDir] = useState<1 | -1>(1);
 
 
   const sortedColors = useMemo(() => [...colorVariants].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)), [colorVariants]);
@@ -479,6 +480,7 @@ function MobileProductView(pp: ProductProps) {
   const photo = currentPhoto;
 
   function handleSwipe(direction: "left" | "right") {
+    setSwipeDir(direction === "left" ? 1 : -1);
     if (sortedColors.length < 2) return;
     const currentId = customPreview ? null : p.activeColorId;
     const idx = sortedColors.findIndex((c) => c.id === currentId);
