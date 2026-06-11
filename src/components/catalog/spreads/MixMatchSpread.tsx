@@ -917,6 +917,7 @@ export function MixMatchCMS() {
   const [shorts, setShorts] = useState<MixTemplate[]>([]);
   const [athlete, setAthlete] = useState<MixTemplate | null>(null);
   const [busy, setBusy] = useState(false);
+  const [bgBusyId, setBgBusyId] = useState<string | null>(null);
 
   async function reload() {
     const { data } = await supabase
@@ -960,6 +961,26 @@ export function MixMatchCMS() {
     if (!confirm("Delete this template?")) return;
     await supabase.from("mix_match_templates" as any).delete().eq("id", id);
     await reload();
+  }
+
+  async function removeBgItem(id: string, photo: string) {
+    setBgBusyId(id);
+    try {
+      const res = await fetch("/api/photoroom", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ src: photo }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string; fallback?: boolean };
+      if (!res.ok || !data.url) throw new Error(data.error || `PhotoRoom failed (${res.status})`);
+      await supabase.from("mix_match_templates" as any).update({ photo: data.url } as any).eq("id", id);
+      notify(data.fallback ? "Background removal unavailable; original kept" : "Background removed", data.fallback);
+      await reload();
+    } catch (e: any) {
+      notify(e?.message || "Background removal failed", true);
+    } finally {
+      setBgBusyId(null);
+    }
   }
 
   async function setAthleteTemplate(file: File) {
@@ -1042,6 +1063,8 @@ export function MixMatchCMS() {
         busy={busy}
         onAdd={(f) => addItem("jersey", f)}
         onDelete={delItem}
+        onRemoveBg={removeBgItem}
+        bgBusyId={bgBusyId}
       />
       <TemplateList
         title="Shorts templates"
@@ -1049,6 +1072,8 @@ export function MixMatchCMS() {
         busy={busy}
         onAdd={(f) => addItem("shorts", f)}
         onDelete={delItem}
+        onRemoveBg={removeBgItem}
+        bgBusyId={bgBusyId}
       />
     </div>
   );
@@ -1060,12 +1085,16 @@ function TemplateList({
   busy,
   onAdd,
   onDelete,
+  onRemoveBg,
+  bgBusyId,
 }: {
   title: string;
   items: MixTemplate[];
   busy: boolean;
   onAdd: (f: File) => void;
   onDelete: (id: string) => void;
+  onRemoveBg: (id: string, photo: string) => void;
+  bgBusyId: string | null;
 }) {
   return (
     <div>
@@ -1092,6 +1121,16 @@ function TemplateList({
             >
               <Trash2 size={11} />
             </button>
+            {it.photo && (
+              <button
+                onClick={() => onRemoveBg(it.id, it.photo!)}
+                disabled={bgBusyId === it.id}
+                title="Remove background"
+                className="absolute top-1 left-1 p-1 rounded bg-black/70 text-white/80 hover:text-white disabled:opacity-50"
+              >
+                {bgBusyId === it.id ? <Loader2 size={11} className="animate-spin" /> : <Scissors size={11} />}
+              </button>
+            )}
           </div>
         ))}
         <label
