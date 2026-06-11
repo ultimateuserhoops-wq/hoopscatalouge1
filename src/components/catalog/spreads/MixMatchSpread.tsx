@@ -527,7 +527,7 @@ function SelectorSection({
           flex: 1,
           position: "relative",
           display: "flex",
-          alignItems: "center",
+          alignItems: "flex-end",
           justifyContent: "center",
           padding: 8,
           cursor: items.length > 1 ? "grab" : "default",
@@ -546,7 +546,7 @@ function SelectorSection({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
               alt=""
-              style={{ maxHeight: "100%", maxWidth: "100%", objectFit: "contain" }}
+              style={{ maxHeight: "100%", maxWidth: "100%", objectFit: "contain", objectPosition: "bottom" }}
             />
           ) : (
             <motion.div
