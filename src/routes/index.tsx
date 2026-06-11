@@ -18,10 +18,34 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "HOOPS · Flip Catalog" },
-      { name: "description", content: "Interactive basketball apparel catalog — jerseys, warm-ups, jackets, hoodies and more." },
+      { title: "HOOPS Basketball Catalogue 2025 — Custom Jerseys, Warm-ups & Apparel" },
+      { name: "description", content: "Browse the HOOPS 2025 basketball apparel catalogue: custom jerseys, warm-ups, jackets, hoodies and shorts with live colorway previews and mix & match." },
+      { name: "keywords", content: "basketball jerseys, custom basketball apparel, team uniforms, basketball warm-ups, HOOPS catalogue, jersey colorway" },
       { property: "og:title", content: "HOOPS · Basketball Catalogue 2025" },
-      { property: "og:description", content: "53-page interactive basketball apparel catalogue with AI-powered colorway generation." },
+      { property: "og:description", content: "Interactive 53-page basketball apparel catalogue — custom jerseys, warm-ups, jackets and hoodies with AI-powered colorway generation." },
+      { property: "og:url", content: "https://hoopscatalouge1.lovable.app/" },
+      { property: "og:type", content: "website" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://hoopscatalouge1.lovable.app/" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "HOOPS Basketball Catalogue",
+          url: "https://hoopscatalouge1.lovable.app/",
+          description:
+            "Interactive basketball apparel catalogue — custom jerseys, warm-ups, jackets and hoodies with live colorway previews.",
+          publisher: {
+            "@type": "Organization",
+            name: "HOOPS",
+            url: "https://hoopscatalouge1.lovable.app/",
+          },
+        }),
+      },
     ],
   }),
   component: CatalogPage,
