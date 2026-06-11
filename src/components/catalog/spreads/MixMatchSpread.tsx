@@ -186,18 +186,12 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
     }
     setGenerating(true);
     try {
-      const result = athlete
-        ? await callGeminiMultiImages(
-            [selectedJersey.photo, selectedShorts.photo, athlete],
-            GEN_PROMPT_ATHLETE,
-            1280
-          )
-        : await callGeminiTwoImages(
-            selectedJersey.photo,
-            selectedShorts.photo,
-            GEN_PROMPT_FLAT,
-            1280
-          );
+      const result = await callGeminiTwoImages(
+        selectedJersey.photo,
+        selectedShorts.photo,
+        GEN_PROMPT,
+        1536
+      );
       setGeneratedResult(result);
       notify("Set generated ✓");
     } catch (e) {
