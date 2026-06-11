@@ -43,67 +43,21 @@ interface Props {
   full?: boolean; // mobile mode
 }
 
-const GEN_PROMPT = `You are a professional sportswear product visualizer. You have TWO source images to study carefully before generating anything.
+const GEN_PROMPT = `Generate a professional on-body basketball uniform product photo of an athlete holding a ball on a clean neutral background.
 
-═══════════════════════════════════════════════════
-STUDY IMAGE 1 CAREFULLY — THIS IS THE JERSEY TOP
-═══════════════════════════════════════════════════
-Extract and memorize EVERY detail from the jersey in IMAGE 1:
-- Primary fabric color (hex approximation)
-- Secondary / trim / accent colors
-- Side panel colors and patterns
-- Collar style and color
-- All sublimation graphics, patterns, and prints on the body
-- Team name: exact text, font style, color, position on chest
-- Player number: exact number, size, fill color, outline color, chest and back position
-- All logos (brand logos, league badges) positions and colors
-- Sleeve edge trim color and width
-- Waistband/hem color on the bottom of the jersey
+IMAGE 1 = JERSEY DESIGN SOURCE:
+- Put this jersey design on the athlete's top.
+- Preserve its colors, collar, trim, side panels, graphics, team text, numbers, logos, and pattern placement.
 
-═══════════════════════════════════════════════════
-STUDY IMAGE 2 CAREFULLY — THIS IS THE SHORTS TEMPLATE
-═══════════════════════════════════════════════════
-Extract and memorize EVERY structural detail from the shorts in IMAGE 2:
-- The EXACT silhouette and cut of the shorts (do not change this)
-- Waistband HEIGHT and style (how tall it is, whether it has a drawstring visible)
-- Leg opening hem style (straight, curved, split, vented)
-- Side seam position and construction
-- Side panel or stripe shape and placement
-- Overall length of the shorts (mid-thigh, above knee, below knee)
-- Any graphic patterns on the shorts (copy these shapes but recolor them)
+IMAGE 2 = SHORTS CUT / STYLE SOURCE:
+- Shorts silhouette, length, waistband height, hem, leg opening, side seams, side panels, and construction come ONLY from IMAGE 2.
+- Keep IMAGE 2's shorts pattern shapes and panel layout, but recolor them using IMAGE 1's jersey palette.
 
-═══════════════════════════════════════════════════
-YOUR TASK — GENERATE A COMPLETE ON-BODY ATHLETE PHOTO
-═══════════════════════════════════════════════════
-
-Create a professional product photograph of an athlete wearing the complete basketball uniform:
-
-JERSEY ON ATHLETE:
-✅ Apply EXACT colors from IMAGE 1 jersey to the athlete's jersey
-✅ Reproduce ALL graphics, text, numbers, patterns from IMAGE 1 onto the jersey
-✅ Keep all design positions proportional to the athlete's body
-✅ Collar style matches IMAGE 1
-✅ Sleeve edges match IMAGE 1 trim
-
-SHORTS ON ATHLETE:
-✅ The shorts CUT AND SILHOUETTE must EXACTLY match IMAGE 2 — same length, same waistband height, same hem style, same side seam construction
-✅ Recolor the shorts to match the primary color of the IMAGE 1 jersey
-✅ Trim and accent areas of the shorts use the trim/accent colors from IMAGE 1
-✅ If IMAGE 2 shorts have graphic patterns, keep those PATTERN SHAPES but recolor them using IMAGE 1 jersey colors
-✅ The waistband height from IMAGE 2 must be preserved on the athlete
-
-ATHLETE:
-✅ Professional standing pose holding a basketball
-✅ Realistic product photography lighting
-✅ Clean neutral background
-✅ High quality, suitable for a product catalogue
-
-CRITICAL RULES:
-❌ DO NOT use jersey proportions for the shorts — the shorts shape comes ONLY from IMAGE 2
-❌ DO NOT change the shorts silhouette or cut — only recolor it
-❌ DO NOT omit any design elements from the jersey (IMAGE 1)
-❌ DO NOT make the shorts look like the jersey bottom — they are completely separate garments with different cuts
-❌ The waistband, hem, and leg opening style must all come from IMAGE 2, not from IMAGE 1`;
+HARD RULES:
+- Do NOT use jersey proportions for the shorts.
+- Do NOT change the shorts cut, waistband, hem, or leg opening from IMAGE 2.
+- Do NOT make the shorts look like the jersey bottom.
+- Top design = IMAGE 1. Shorts structure = IMAGE 2. Shorts colors = IMAGE 1 palette.`;
 
 function useSectionSwipe(onLeft: () => void, onRight: () => void) {
   const startX = useRef<number | null>(null);
@@ -190,7 +144,7 @@ export function MixMatchSpread({ isAdmin, full }: Props) {
         selectedJersey.photo,
         selectedShorts.photo,
         GEN_PROMPT,
-        1536
+        1024
       );
       setGeneratedResult(result);
       notify("Set generated ✓");
