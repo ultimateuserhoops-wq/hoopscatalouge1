@@ -167,14 +167,28 @@ export function MobileCatalog({ spreadIndex, setSpreadIndex, cat, isAdmin, cmsOp
       )}
 
 
-      {/* Footer page counter */}
+      {/* Footer — progress bar + page counter */}
       <div style={{
-        flexShrink: 0, padding: "2px 12px", background: "var(--t-surface)", borderTop: "1px solid var(--t-border)",
-        textAlign: "center", fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.5rem",
-        letterSpacing: "0.25em", color: "var(--t-subtext)", textTransform: "uppercase",
-        paddingBottom: "calc(2px + env(safe-area-inset-bottom, 0px))",
+        flexShrink: 0, padding: "3px 12px", background: "var(--t-surface)", borderTop: "1px solid var(--t-border)",
+        paddingBottom: "calc(3px + env(safe-area-inset-bottom, 0px))",
       }}>
-        Page {String(current.pageLeft).padStart(2, "0")}–{String(current.pageRight).padStart(2, "0")} of {totalPages}
+        <div style={{ height: 2, background: "var(--t-border)", borderRadius: 1, marginBottom: 3, overflow: "hidden" }}>
+          <motion.div
+            animate={{ width: `${((spreadIndex + 1) / spreads.length) * 100}%` }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            style={{ height: "100%", background: "var(--t-accent)", borderRadius: 1 }}
+          />
+        </div>
+        <div style={{
+          textAlign: "center",
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontSize: "0.5rem",
+          letterSpacing: "0.25em",
+          color: "var(--t-subtext)",
+          textTransform: "uppercase",
+        }}>
+          Page {String(current.pageLeft).padStart(2, "0")}–{String(current.pageRight).padStart(2, "0")} of {totalPages}
+        </div>
       </div>
 
       {isAdmin && (
