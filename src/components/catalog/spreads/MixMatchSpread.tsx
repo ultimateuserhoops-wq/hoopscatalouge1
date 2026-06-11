@@ -50,17 +50,17 @@ IMAGE 2: A flat shorts (front view) showing the cut, waistband, side stripes, he
 
 YOUR TASK: Create a professional flat-lay product photo of a complete basketball set:
 - Jersey: exact colors, graphics, numbers, text, logos from IMAGE 1
-- Shorts: exact cut/silhouette/hem/waistband style from IMAGE 2, recolored to match the jersey's primary and trim colors from IMAGE 1
+- Shorts: keep ONLY the cut / silhouette / length / waistband / hem shape from IMAGE 2. Re-skin the shorts so their SURFACE DESIGN matches IMAGE 1's jersey — same primary color, same trim colors, same prints / patterns / splatter / texture / graphic motifs, same team logo or wordmark, same side-panel treatment, same number style (use the jersey's number on the shorts leg). The shorts must visually read as part of the SAME uniform as the jersey, not a recolored generic short.
 - Both items displayed together as a flat-lay product set on a neutral/dark background
 - No model/person — flat product only.`;
 
 const GEN_PROMPT_ATHLETE = `You are a professional sportswear photographer.
 
 IMAGE 1: A flat jersey top (front view) — use its EXACT colors, graphics, numbers, text and logos.
-IMAGE 2: A flat shorts (front view) — use its EXACT cut, length, waistband and side-stripe style, recolored to match IMAGE 1's jersey palette.
+IMAGE 2: A flat shorts (front view) — use ONLY its cut, length, waistband and hem shape as the silhouette reference. Do NOT copy its colors, prints, or graphics.
 IMAGE 3: A photo of a basketball player (model). Keep the SAME person — same face, skin tone, hairstyle, body proportions, pose, shoes, and background lighting.
 
-YOUR TASK: Dress the player in IMAGE 3 with the jersey from IMAGE 1 and matching shorts based on IMAGE 2. The jersey graphic, number, and text from IMAGE 1 must be clearly visible and undistorted on the player's chest. Keep the player's pose, face, shoes, and background unchanged. Produce a clean, high-quality full-body product photo of the player wearing the complete set.`;
+YOUR TASK: Dress the player in IMAGE 3 with the jersey from IMAGE 1 and matching shorts. The shorts must look like part of the SAME uniform as the jersey: re-skin IMAGE 2's silhouette so the surface design (primary color, trim colors, prints / patterns / splatter / texture, team logo or wordmark, side-panel treatment, and player number) is taken from IMAGE 1's jersey design — not from IMAGE 2's original colors. The jersey graphic, number, and text from IMAGE 1 must be clearly visible and undistorted on the player's chest, and the same design language must continue on the shorts. Keep the player's pose, face, skin, hair, shoes, and background unchanged. Produce a clean, high-quality full-body product photo of the player wearing the matching set.`;
 
 function useSectionSwipe(onLeft: () => void, onRight: () => void) {
   const startX = useRef<number | null>(null);
