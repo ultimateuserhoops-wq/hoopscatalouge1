@@ -14,27 +14,37 @@ function json(body: unknown, status = 200) {
   });
 }
 
+function fallback(src: string, error: string) {
+  return json({ url: src, fallback: true, error });
+}
+
 export const Route = createFileRoute("/api/photoroom")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
       POST: async ({ request }) => {
+        let src = "";
         try {
-          const { src } = (await request.json()) as { src?: string };
+          ({ src = "" } = (await request.json()) as { src?: string });
           if (!src || typeof src !== "string") return json({ error: "src required" }, 400);
 
           const apiKey = process.env.PHOTOROOM_API_KEY;
-          if (!apiKey) return json({ error: "PHOTOROOM_API_KEY missing" }, 500);
+          if (!apiKey) return fallback(src, "PHOTOROOM_API_KEY missing");
 
           const isDataUrl = src.startsWith("data:");
           const hash = createHash("sha256").update(src).digest("hex").slice(0, 32);
           const cacheKey = `photoroom-cache/${hash}.png`;
 
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const bucket = supabaseAdmin.storage.from("hoops-catalog-images");
+          let bucket: ReturnType<Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"]["storage"]["from"]> | null = null;
+          try {
+            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+            bucket = supabaseAdmin.storage.from("hoops-catalog-images");
+          } catch (error) {
+            console.warn("PhotoRoom cache unavailable", error);
+          }
 
           // Cache lookup (only http(s) sources — data URLs are transient)
-          if (!isDataUrl) {
+          if (!isDataUrl && bucket) {
             const pub = bucket.getPublicUrl(cacheKey).data.publicUrl;
             try {
               const head = await fetch(pub, { method: "HEAD" });
@@ -53,7 +63,7 @@ export const Route = createFileRoute("/api/photoroom")({
             imgBlob = new Blob([buf], { type: mime });
           } else {
             const r = await fetch(src);
-            if (!r.ok) return json({ error: `fetch src ${r.status}` }, 502);
+            if (!r.ok) return fallback(src, `fetch src ${r.status}`);
             imgBlob = await r.blob();
           }
 
@@ -68,11 +78,11 @@ export const Route = createFileRoute("/api/photoroom")({
           });
           if (!pr.ok) {
             const text = await pr.text().catch(() => "");
-            return json({ error: `photoroom ${pr.status}: ${text.slice(0, 240)}` }, 502);
+            return fallback(src, `photoroom ${pr.status}: ${text.slice(0, 240)}`);
           }
           const outBytes = new Uint8Array(await pr.arrayBuffer());
 
-          if (!isDataUrl) {
+          if (!isDataUrl && bucket) {
             const { error: upErr } = await bucket.upload(cacheKey, outBytes, {
               contentType: "image/png",
               upsert: true,
@@ -87,7 +97,7 @@ export const Route = createFileRoute("/api/photoroom")({
           return json({ url: `data:image/png;base64,${b64out}`, cached: false });
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
-          return json({ error: msg }, 500);
+          return src ? fallback(src, msg) : json({ error: msg, fallback: true });
         }
       },
     },
