@@ -44,10 +44,10 @@ export function UploadSlot({ color, slot, icon, label, accept, allowRecolor, sou
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ src: photo }),
       });
-      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string; fallback?: boolean };
       if (!res.ok || !data.url) throw new Error(data.error || `PhotoRoom failed (${res.status})`);
       onUpdate(color.id, { [photoField]: data.url } as any);
-      notify("Background removed");
+      notify(data.fallback ? "Background removal unavailable; original kept" : "Background removed", data.fallback);
     } catch (e) {
       notify(e instanceof Error ? e.message : "Background removal failed", true);
     } finally { setBusy(null); }
