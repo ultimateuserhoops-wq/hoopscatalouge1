@@ -657,7 +657,7 @@ function MobileProductView(pp: ProductProps) {
       {/* Color grid */}
       <div style={{ padding: "4px 10px", background: "var(--t-surface)", borderTop: "1px solid var(--t-border)", flexShrink: 0 }}>
         <div className="mobile-color-grid" style={{
-          display: "flex", gap: 5, overflowX: "auto", overflowY: "visible", paddingBottom: 2,
+          display: "flex", gap: 5, overflowX: "auto", overflowY: "visible", paddingBottom: 20,
           scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
         }}>
           {sortedColors.map((c) => {
