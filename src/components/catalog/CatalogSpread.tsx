@@ -7,7 +7,6 @@ import { hexToRgba, callGemini, getLeftPageBg, buildMatchBgPrompt, buildColorVar
 import { notify } from "@/lib/toast";
 import { ProductDisplayUpload } from "@/components/ProductDisplayUpload";
 import { ProductCutout } from "@/components/ProductCutout";
-import { ProductCarousel } from "./ProductCarousel";
 import { useServerFn } from "@tanstack/react-start";
 import { generateVeoPrompt, startKieVideo, pollKieVideo } from "@/lib/kie-video.functions";
 
@@ -304,16 +303,68 @@ export function CatalogSpread(p: Props) {
 
           {/* Product hero wrap — bounded between top bar (44px) and product label (72px) */}
           <div className="product-hero-wrap" style={{ position: "absolute", top: 44, left: 0, right: 0, height: 452, overflow: "hidden" }}>
-            <div style={{ position: "absolute", inset: 0, paddingBottom: 40 }}>
-              <ProductCarousel
-                product={product}
-                colorVariants={colorVariants}
-                activeColorId={p.activeColorId}
-                onSelect={(id) => { setCustomPreview(null); p.setActiveColorId(id); }}
-                displayMode={displayMode}
-                cardMinClass="min-w-[260px] md:min-w-[300px]"
-              />
-            </div>
+            <motion.div
+              className="product-view"
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", repeatType: "loop" }}
+              style={{ position: "absolute", inset: 0, overflow: "hidden" }}
+            >
+            <AnimatePresence mode="wait">
+            <motion.div
+              key={`media-${p.activeColorId}-${displayMode}`}
+              initial={{ opacity: 0, scale: 0.94, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: -8 }}
+              transition={{ duration: 0.28, ease: "easeOut" }}
+              style={{ position: "absolute", inset: 0 }}
+            >
+              {displayMode === "jersey" && (
+                <div style={{ position: "absolute", inset: 0 }}>
+                  <ProductDisplayUpload colorId={p.activeColorId} slotType="jersey" isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
+                    {activeColor?.jersey_photo
+                      ? <ProductCutout src={activeColor.jersey_photo} envTint={leftPageBg} isAdmin={!!p.isAdmin} />
+                      : activeColor && <JerseySVG hexMain={activeColor.hex_main} hexShade={activeColor.hex_shade || activeColor.hex_main} isLight={!!activeColor.is_light} category={product.category || undefined} />}
+                  </ProductDisplayUpload>
+                </div>
+              )}
+              {displayMode === "body" && (
+                <div style={{ position: "absolute", inset: 0 }}>
+                  <ProductDisplayUpload colorId={p.activeColorId} slotType="body" isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
+                    {activeColor?.body_photo
+                      ? <ProductCutout src={activeColor.body_photo} envTint={leftPageBg} isAdmin={!!p.isAdmin} />
+                      : <div className="w-full h-full flex flex-col items-center justify-center text-center" style={{ color: "var(--t-subtext)" }}>
+                          <div className="text-5xl">🧍</div>
+                          <div className="text-[0.6rem] font-condensed tracking-widest mt-2">ON-BODY PHOTO</div>
+                        </div>}
+                  </ProductDisplayUpload>
+                </div>
+              )}
+              {displayMode === "motion" && (
+                <div style={{ position: "absolute", inset: 0 }}>
+                  {productVideo ? (
+                    <video
+                      src={productVideo}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      style={{ width: "100%", height: "100%", objectFit: "contain", background: "transparent" }}
+                    />
+                  ) : (
+                    <ProductDisplayUpload colorId={p.activeColorId} slotType="motion" isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
+                      {activeColor?.motion_gif
+                        ? <img loading="lazy" decoding="async" crossOrigin="anonymous" src={activeColor.motion_gif} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", mixBlendMode: "normal" }} />
+                        : <div className="w-full h-full flex flex-col items-center justify-center text-center" style={{ color: "var(--t-subtext)" }}>
+                            <div className="text-5xl">🎞</div>
+                            <div className="text-[0.6rem] font-condensed tracking-widest mt-2">MOTION VIDEO</div>
+                          </div>}
+                    </ProductDisplayUpload>
+                  )}
+                </div>
+              )}
+            </motion.div>
+            </AnimatePresence>
+            </motion.div>
 
             {/* AI action row — inside hero wrap, anchored bottom */}
             <div className="absolute left-1/2 -translate-x-1/2 flex gap-2 z-20" style={{ bottom: 8 }}>
