@@ -6,6 +6,7 @@ import { useSwipe } from "@/hooks/useSwipe";
 import type { CatalogTheme, ColorVariant, DisplayMode, Product, SpecRow } from "@/lib/catalog-types";
 import { JerseySVG } from "./JerseySVG";
 import { ProductDisplayUpload } from "@/components/ProductDisplayUpload";
+import { ProductCarousel } from "./ProductCarousel";
 import { hexToRgba, callGemini, getCurrentThemeBg, buildMatchBgPrompt, buildColorVariationPrompt, getAIErrorMessage, readFileAsDataURL, resizeImage, compositeOntoBackground, buildRemoveBgToSolidPrompt } from "@/lib/gemini";
 import { notify } from "@/lib/toast";
 import { MENU_PAGES, type SpreadDef } from "@/lib/catalog-spreads";
@@ -553,39 +554,16 @@ function MobileProductView(pp: ProductProps) {
           transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", repeatType: "loop" }}
           style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}
         >
-          <ProductDisplayUpload colorId={liveColor?.id ?? null} slotType={displayMode} isAdmin={!!p.isAdmin} onUpload={handleDisplayUpload}>
-            <AnimatePresence mode="wait" custom={swipeDir}>
-            <motion.div
-              key={`mobile-media-${liveColor?.id}-${displayMode}`}
-              custom={swipeDir}
-              variants={{
-                enter: (d: number) => ({ opacity: 0, x: d * 20, scale: 0.97 }),
-                center: { opacity: 1, x: 0, scale: 1 },
-                exit: (d: number) => ({ opacity: 0, x: d * -20, scale: 0.97 }),
-              }}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.22, ease: "easeOut" }}
-              style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
-            >
-              {photo ? (
-                <img loading="lazy" decoding="async" crossOrigin="anonymous" src={photo} alt={liveColor?.name} style={{ maxWidth: "85%", maxHeight: "90%", objectFit: "contain", mixBlendMode: "normal" }} />
-              ) : displayMode === "jersey" && liveColor ? (
-                <div style={{ width: "65%", height: "65%" }}>
-                  <JerseySVG hexMain={liveColor.hex_main} hexShade={liveColor.hex_shade || liveColor.hex_main} isLight={!!liveColor.is_light} category={product.category || undefined} />
-                </div>
-              ) : (
-                <div style={{ textAlign: "center", opacity: 0.35, color: "var(--t-text)" }}>
-                  <div style={{ fontSize: "2.5rem" }}>{displayMode === "body" ? "🧍" : "🎞"}</div>
-                  <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: "0.6rem", letterSpacing: "0.2em", marginTop: 8, textTransform: "uppercase" }}>
-                    {displayMode === "body" ? "On-Body Photo" : "Motion GIF"}
-                  </div>
-                </div>
-              )}
-            </motion.div>
-            </AnimatePresence>
-          </ProductDisplayUpload>
+          <div style={{ width: "100%", height: "100%" }}>
+            <ProductCarousel
+              product={product}
+              colorVariants={colorVariants}
+              activeColorId={liveColor?.id ?? null}
+              onSelect={(id) => p.setActiveColorId(id)}
+              displayMode={displayMode}
+              cardMinClass="min-w-[70vw]"
+            />
+          </div>
         </motion.div>
 
         {/* Display mode buttons */}
