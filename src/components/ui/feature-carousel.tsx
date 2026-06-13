@@ -11,7 +11,7 @@ export interface FeatureCarouselImage {
   accent?: string;
 }
 
-export interface HeroProps extends React.HTMLAttributes<HTMLElement> {
+export interface HeroProps extends Omit<React.HTMLAttributes<HTMLElement>, "title"> {
   title: React.ReactNode;
   subtitle: string;
   images: FeatureCarouselImage[];
