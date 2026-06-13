@@ -526,39 +526,72 @@ function SelectorSection({
         style={{
           flex: 1,
           position: "relative",
-          display: "flex",
-          alignItems: "flex-end",
-          justifyContent: "center",
           padding: 8,
           cursor: items.length > 1 ? "grab" : "default",
           userSelect: "none",
           minHeight: 0,
+          perspective: "1200px",
         }}
       >
-        <AnimatePresence mode="wait">
-          {current?.photo ? (
-            <motion.img
-              key={current.id}
-              src={current.photo}
-              draggable={false}
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              alt=""
-              style={{ maxHeight: "100%", maxWidth: "100%", objectFit: "contain", objectPosition: "bottom" }}
-            />
-          ) : (
-            <motion.div
-              key="empty"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.15 }}
-              className="flex items-center justify-center"
-            >
-              <Shirt size={68} color="#fff" />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {items.length === 0 ? (
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.15 }}>
+            <Shirt size={68} color="#fff" />
+          </div>
+        ) : (
+          <div style={{ position: "absolute", inset: 0, transformStyle: "preserve-3d" }}>
+            {items.map((it, i) => {
+              const total = items.length;
+              let pos = ((i - index) % total + total) % total;
+              if (pos > Math.floor(total / 2)) pos -= total;
+              const isCenter = pos === 0;
+              const abs = Math.abs(pos);
+              if (abs > 2) return null;
+              const translateX = pos * 32;
+              const rotateY = pos * -24;
+              const scale = isCenter ? 1 : abs === 1 ? 0.72 : 0.55;
+              const opacity = isCenter ? 1 : abs === 1 ? 0.65 : 0.3;
+              const z = 100 - abs;
+              return (
+                <div
+                  key={it.id}
+                  onClick={() => !isCenter && setIndex(i)}
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    width: "78%",
+                    height: "92%",
+                    transform: `translate(-50%, -50%) translateX(${translateX}%) rotateY(${rotateY}deg) scale(${scale})`,
+                    transition: "transform 0.55s cubic-bezier(0.32,0.72,0,1), opacity 0.55s",
+                    opacity,
+                    zIndex: z,
+                    cursor: isCenter ? "default" : "pointer",
+                    display: "flex",
+                    alignItems: "flex-end",
+                    justifyContent: "center",
+                  }}
+                >
+                  {it.photo ? (
+                    <img
+                      src={it.photo}
+                      draggable={false}
+                      alt=""
+                      style={{
+                        maxHeight: "100%",
+                        maxWidth: "100%",
+                        objectFit: "contain",
+                        objectPosition: "bottom",
+                        filter: isCenter ? "none" : "brightness(0.7)",
+                      }}
+                    />
+                  ) : (
+                    <Shirt size={48} color="#fff" style={{ opacity: 0.3 }} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
         {items.length > 1 && (
           <>
             <button
@@ -579,47 +612,34 @@ function SelectorSection({
         )}
       </div>
 
-      {/* thumbnail row 52px */}
+      {/* pagination dots */}
       <div
         style={{
-          height: 52,
+          height: 28,
           padding: "0 12px",
           display: "flex",
           gap: 6,
           alignItems: "center",
-          overflowX: "auto",
+          justifyContent: "center",
         }}
       >
-        {items.map((it, i) => {
-          const isSel = i === index;
-          return (
-            <button
-              key={it.id}
-              onClick={() => setIndex(i)}
-              style={{
-                width: 48,
-                height: 44,
-                flexShrink: 0,
-                borderRadius: 3,
-                overflow: "hidden",
-                border: isSel
-                  ? "2px solid var(--t-accent)"
-                  : "1px solid rgba(255,255,255,0.12)",
-                background: "rgba(255,255,255,0.04)",
-                cursor: "pointer",
-                padding: 0,
-              }}
-            >
-              {it.photo && (
-                <img
-                  src={it.photo}
-                  alt=""
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-              )}
-            </button>
-          );
-        })}
+        {items.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setIndex(i)}
+            aria-label={`Go to ${i + 1}`}
+            style={{
+              height: 6,
+              width: i === index ? 22 : 6,
+              borderRadius: 999,
+              border: "none",
+              padding: 0,
+              background: i === index ? "var(--t-accent)" : "rgba(255,255,255,0.25)",
+              cursor: "pointer",
+              transition: "all 0.3s",
+            }}
+          />
+        ))}
         {items.length === 0 && (
           <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "20px 0" }}>
             <motion.div
