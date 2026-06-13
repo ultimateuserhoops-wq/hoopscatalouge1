@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { SpreadDef } from "@/lib/catalog-spreads";
-import { HeroSection, type FeatureCarouselImage } from "@/components/ui/feature-carousel";
+import { ExpandableGallery } from "@/components/ui/gallery-animation";
 
 interface GalleryItem {
   id: string;
@@ -51,20 +51,7 @@ export function GallerySpread({ spread, isAdmin: _isAdmin, full = false }: Props
   const W = full ? "100vw" : "880px";
   const H = full ? "100%" : "570px";
 
-  const carouselImages: FeatureCarouselImage[] = items.map((it) => ({
-    src: it.photo,
-    alt: it.title || "Jersey photo",
-    caption: it.title,
-    sub: it.subtitle,
-    accent: it.hexMain,
-  }));
-
-  const title = (
-    <>
-      {spread.title || "Gallery"}
-      <span style={{ color: "var(--t-accent)" }}>.</span>
-    </>
-  );
+  const galleryImages = items.map((it) => it.photo).filter(Boolean);
 
   return (
     <div
@@ -97,11 +84,26 @@ export function GallerySpread({ spread, isAdmin: _isAdmin, full = false }: Props
           </span>
         </div>
       ) : (
-        <HeroSection
-          title={title}
-          subtitle={`HOOPS · ${spread.title || "Featured Jerseys"}`}
-          images={carouselImages}
-        />
+        <div className="flex flex-col h-full w-full px-6 pt-6 pb-4 dark">
+          <div className="text-center mb-3">
+            <h1
+              className="font-display tracking-wide leading-tight"
+              style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: "2rem", color: "#fff" }}
+            >
+              {spread.title || "Gallery"}
+              <span style={{ color: "var(--t-accent)" }}>.</span>
+            </h1>
+            <p
+              className="font-condensed uppercase"
+              style={{ fontSize: "0.62rem", letterSpacing: "0.28em", color: "rgba(255,255,255,0.5)" }}
+            >
+              HOOPS · {spread.title || "Featured Jerseys"}
+            </p>
+          </div>
+          <div className="flex-1 min-h-0 [&>div.flex]:!h-full">
+            <ExpandableGallery images={galleryImages} className="h-full w-full" />
+          </div>
+        </div>
       )}
     </div>
   );
